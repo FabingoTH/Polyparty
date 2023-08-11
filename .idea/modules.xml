@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/git repo.iml" filepath="$PROJECT_DIR$/.idea/git repo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Polyparty.iml" filepath="$PROJECT_DIR$/.idea/modules/Polyparty.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Polyparty.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Polyparty.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Polyparty.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Polyparty.test.iml" />
     </modules>
   </component>
 </project>
