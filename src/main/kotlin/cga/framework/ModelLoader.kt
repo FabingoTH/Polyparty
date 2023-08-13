@@ -16,11 +16,11 @@ import java.nio.IntBuffer
 import java.util.*
 
 object ModelLoader {
-    private fun load(objPath: String): RawModel? {
+    fun load(objPath: String): RawModel? {
         val rm = RawModel()
         try {
             val aiScene = Assimp.aiImportFile(objPath, Assimp.aiProcess_Triangulate or Assimp.aiProcess_GenNormals)
-                    ?: return null
+                ?: return null
             // read materials
             for (m in 0 until aiScene.mNumMaterials()) {
                 val rmat = RawMaterial()
@@ -168,12 +168,22 @@ object ModelLoader {
         }
         // meshes
         for (i in model.meshes.indices) {
-            meshes.add(Mesh(flattenVertexData(model.meshes[i].vertices, rot),
+            meshes.add(
+                Mesh(
+                    flattenVertexData(model.meshes[i].vertices, rot),
                     flattenIndexData(model.meshes[i].indices),
                     vertexAttributes,
-                    materials[model.meshes[i].materialIndex]))
+                    materials[model.meshes[i].materialIndex]
+                )
+            )
         }
         // assemble the renderable
         return Renderable(meshes)
     }
+}
+
+fun main() {
+
+    ModelLoader.load("assets/GARDEN/model.obj") ?: print("fail" + Assimp.aiGetErrorString())
+
 }

@@ -2,7 +2,10 @@ package cga.exercise.game
 
 import cga.exercise.components.camera.Aspectratio.Companion.custom
 import cga.exercise.components.camera.TronCamera
-import cga.exercise.components.geometry.*
+import cga.exercise.components.geometry.Material
+import cga.exercise.components.geometry.Mesh
+import cga.exercise.components.geometry.Renderable
+import cga.exercise.components.geometry.VertexAttribute
 import cga.exercise.components.light.PointLight
 import cga.exercise.components.light.SpotLight
 import cga.exercise.components.shader.ShaderProgram
@@ -42,6 +45,15 @@ class Scene(private val window: GameWindow) {
     private var oldMouseY = 0.0
     private var firstMouseMove = true
 
+    /** PROJECT MODELS
+     *  Garten als Overworld-Model: Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets/project_textures".
+     *  Modell "Cloister Garden" von Bruno Oliveira via PolyPizza.
+     *  Texture Maps von Meike in Blender hinzugefügt.
+     *  Alles in Scene ladbar mit vorhandener loadModel()-Methode (vgl. Motorcycle aus Praktikum).
+     */
+    private val garden: Renderable
+
+
     //scene setup
     init {
         //load textures
@@ -67,15 +79,27 @@ class Scene(private val window: GameWindow) {
             val mesh = Mesh(m.vertexData, m.indexData, vertexAttributes, groundMaterial)
             ground.meshes.add(mesh)
         }
-        bike = loadModel("assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f) ?: throw IllegalArgumentException("Could not load the model")
+        bike = loadModel(
+            "assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",
+            Math.toRadians(-90.0f),
+            Math.toRadians(90.0f),
+            0.0f
+        ) ?: throw IllegalArgumentException("Could not load the model")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
+
+
+        garden = loadModel("assets/finGarden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            ?: throw IllegalArgumentException("Could not load the model")
+        garden.scale(Vector3f(2.0f))
+        garden.rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
+        garden.translate(Vector3f(-0.2f, 0.0f, 0.0f)) // beim garten ist -x oben!!! lets goooooo
 
         //setup camera
         camera = TronCamera(
-                custom(window.framebufferWidth, window.framebufferHeight),
-                Math.toRadians(90.0f),
-                0.1f,
-                100.0f
+            custom(window.framebufferWidth, window.framebufferHeight),
+            Math.toRadians(90.0f),
+            0.1f,
+            100.0f
         )
         camera.parent = bike
         camera.rotate(Math.toRadians(-35.0f), 0.0f, 0.0f)
@@ -133,6 +157,8 @@ class Scene(private val window: GameWindow) {
         ground.render(staticShader)
         staticShader.setUniform("shadingColor", changingColor)
         bike.render(staticShader)
+
+        garden!!.render(staticShader)
     }
 
     fun update(dt: Float, t: Float) {
