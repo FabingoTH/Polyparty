@@ -11,7 +11,7 @@ import org.joml.Matrix4f
 class TronCamera(var aspectratio: Aspectratio = Aspectratio.WIDESCREEN,
                  var fov: Float = Math.toRadians(90.0).toFloat(),
                  var near: Float = 0.1f,
-                 var far: Float = 100.0f) : Transformable() {
+                 var far: Float = 200.0f) : Transformable() {
 
 
     //we do a view matrix update only when needed

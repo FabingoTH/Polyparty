@@ -28,6 +28,9 @@ class Scene(private val window: GameWindow) {
 
     private val ground: Renderable
     private val bike: Renderable
+    private val skybox : Renderable
+
+    private val skyColor: Vector3f
 
     private val groundMaterial: Material
     private val groundColor: Vector3f
@@ -87,6 +90,17 @@ class Scene(private val window: GameWindow) {
         ) ?: throw IllegalArgumentException("Could not load the model")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
 
+        skybox = loadModel(
+            "assets/Skybox/anime_sky.obj",
+            Math.toRadians(-90.0f),
+            Math.toRadians(90.0f),
+            0.0f
+        ) ?: throw IllegalArgumentException("Could not load the model")
+        skybox.apply {
+            scale(Vector3f(0.5f))
+            rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
+        }
+
 
         garden = loadModel("assets/finGarden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
             ?: throw IllegalArgumentException("Could not load the model")
@@ -99,13 +113,14 @@ class Scene(private val window: GameWindow) {
             custom(window.framebufferWidth, window.framebufferHeight),
             Math.toRadians(90.0f),
             0.1f,
-            100.0f
+            1000.0f
         )
         camera.parent = bike
-        camera.rotate(Math.toRadians(-35.0f), 0.0f, 0.0f)
-        camera.translate(Vector3f(0.0f, 0.0f, 4.0f))
+        camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
+        camera.translate(Vector3f(0.0f, 5.0f, 8.0f))
 
         groundColor = Vector3f(0.0f, 1.0f, 0.0f)
+        skyColor = Vector3f(1.0f, 1.0f, 1.0f)
 
         //bike point light
         bikePointLight = PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 0.0f), Vector3f(0.0f, 0.5f, 0.0f))
@@ -140,15 +155,15 @@ class Scene(private val window: GameWindow) {
         camera.bind(staticShader)
 
         val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
-        bikePointLight.lightColor = changingColor
+         bikePointLight.lightColor = changingColor
 
         // bind lights
         for (pointLight in pointLightList) {
-            pointLight.bind(staticShader)
+             pointLight.bind(staticShader)
         }
         staticShader.setUniform("numPointLights", pointLightList.size)
         for (spotLight in spotLightList) {
-            spotLight.bind(staticShader, camera.calculateViewMatrix())
+             spotLight.bind(staticShader, camera.calculateViewMatrix())
         }
         staticShader.setUniform("numSpotLights", spotLightList.size)
 
@@ -157,12 +172,14 @@ class Scene(private val window: GameWindow) {
         ground.render(staticShader)
         staticShader.setUniform("shadingColor", changingColor)
         bike.render(staticShader)
+        staticShader.setUniform("shadingColor", skyColor)
+        skybox.render(staticShader)
 
         garden!!.render(staticShader)
     }
 
     fun update(dt: Float, t: Float) {
-        val moveMul = 5.0f
+        val moveMul = 15.0f
         val rotateMul = 0.5f * Math.PI.toFloat()
         if (window.getKeyState(GLFW_KEY_W)) {
             bike.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
