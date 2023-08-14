@@ -167,8 +167,10 @@ class Scene(private val window: GameWindow) {
          */
         rake = loadModel("assets/Hake/rake.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
             ?: throw IllegalArgumentException("Could not load the rake")
-        rake.scale(Vector3f(5f))
-        rake.rotate(0f, 0f, Math.toRadians(-90.0f))
+        rake.scale(Vector3f(0.5f))
+        rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
+        rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
+
 
         /**
          ** Setup Gartenschlauch
