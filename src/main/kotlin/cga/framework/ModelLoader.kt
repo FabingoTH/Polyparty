@@ -16,7 +16,7 @@ import java.nio.IntBuffer
 import java.util.*
 
 object ModelLoader {
-    fun load(objPath: String): RawModel? {
+    private fun load(objPath: String): RawModel? {
         val rm = RawModel()
         try {
             val aiScene = Assimp.aiImportFile(objPath, Assimp.aiProcess_Triangulate or Assimp.aiProcess_GenNormals)
@@ -180,10 +180,4 @@ object ModelLoader {
         // assemble the renderable
         return Renderable(meshes)
     }
-}
-
-fun main() {
-
-    ModelLoader.load("assets/GARDEN/model.obj") ?: print("fail" + Assimp.aiGetErrorString())
-
 }

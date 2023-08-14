@@ -9,7 +9,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/purpleIMG.png
+map_Kd garden_textures/purpleIMG.png
 
 newmtl mat10
 Ns 0.000000
@@ -20,7 +20,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/greentreesIMG.png
+map_Kd garden_textures/greentreesIMG.png
 
 newmtl mat12
 Ns 0.000000
@@ -30,7 +30,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/yellowIMG.png
+map_Kd garden_textures/yellowIMG.png
 
 newmtl mat14
 Ns 0.000000
@@ -40,7 +40,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/redIMG.png
+map_Kd garden_textures/redIMG.png
 
 newmtl mat15
 Ns 0.000000
@@ -50,7 +50,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/groundgreyIMG.png
+map_Kd garden_textures/groundgreyIMG.png
 
 newmtl mat16
 Ns 0.000000
@@ -60,7 +60,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/greytilesIMG.png
+map_Kd garden_textures/greytilesIMG.png
 
 newmtl mat18
 Ns 0.000000
@@ -70,7 +70,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/brightwoodIMG.png
+map_Kd garden_textures/brightwoodIMG.png
 
 newmtl mat19
 Ns 0.000000
@@ -80,7 +80,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/darkerwoodIMG.png
+map_Kd garden_textures/darkerwoodIMG.png
 
 newmtl mat20
 Ns 0.000000
@@ -90,7 +90,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/trunkIMG.png
+map_Kd garden_textures/trunkIMG.png
 
 newmtl mat21
 Ns 0.000000
@@ -100,7 +100,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/whiteIMG.png
+map_Kd garden_textures/whiteIMG.png
 
 newmtl mat3
 Ns 0.000000
@@ -110,7 +110,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/waterIMG.png
+map_Kd garden_textures/waterIMG.png
 
 newmtl mat9
 Ns 0.000000
@@ -120,4 +120,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd project_textures/greengroundIMG.png
+map_Kd garden_textures/greengroundIMG.png

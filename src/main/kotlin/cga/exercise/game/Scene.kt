@@ -46,12 +46,33 @@ class Scene(private val window: GameWindow) {
     private var firstMouseMove = true
 
     /** PROJECT MODELS
-     *  Garten als Overworld-Model: Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets/project_textures".
-     *  Modell "Cloister Garden" von Bruno Oliveira via PolyPizza.
-     *  Texture Maps von Meike in Blender hinzugefügt.
+     *  Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets".
+     *  -> Texture Maps von Meike in Blender hinzugefügt.
      *  Alles in Scene ladbar mit vorhandener loadModel()-Methode (vgl. Motorcycle aus Praktikum).
+     *  --------------------------------------------------------------------------------------------
+     *  --------------------------------------------------------------------------------------------
+     *  Garten als Overworld-Model:
+     *  -> Modell "Cloister Garden" von Bruno Oliveira via PolyPizza.
      */
     private val garden: Renderable
+
+    /** Haufen aus Schaufel, Hake und Schnecke:
+     * Symbolisiert das "Memory"/Sortier-Spiel. Anvisieren und drücken auf "E" soll
+     * teleportieren/Spiel starten.
+     * -> Modell "Garden Trovel" von Pookage Hayes via PolyPizza.
+     * -> Modell "Hand Rake" von Jarlan Perez via PolyPizza.
+     * -> Modell "Snail" von Poly by Google via PolyPizza.
+     */
+    private val shovel: Renderable
+    private val rake: Renderable
+    private val snail: Renderable
+
+    /** Gartenschlauch:
+     * Symbolisiert das Springseil-Spiel. Anvisieren und drücken auf "E" soll
+     * teleportieren/Spiel starten.
+     * -> Modell "TIME HOTEL 4.28" von S. Paul Michael via PolyPizza.
+     */
+    private val hose: Renderable
 
 
     //scene setup
@@ -87,12 +108,84 @@ class Scene(private val window: GameWindow) {
         ) ?: throw IllegalArgumentException("Could not load the model")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
 
+        /**
+         * Orientierung im World-Koordinatensystem (Ausrichtung vom Spawn aus (vor der offenen Gartenseite mit Blick auf Garten))
+         *
+         * x geht nach rechts, -x geht nach links
+         * y geht nach oben, -y geht nach unten
+         * z geht nach hinten (Richtung Cam/"Rückwärtsbewegung"), -z geht nach vorne (von Cam weg/in die Ferne)
+         *
+         * Falls der gesamte Garten verschoben werden soll, dies erst NACH den parent-Setzungen unten machen!! Sonst ist alles hinüber
+         *
+         */
 
-        garden = loadModel("assets/finGarden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the model")
+        /** Overworld-Setup:
+         ** Setup Garten
+         */
+        garden = loadModel("assets/Garten/finGarden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            ?: throw IllegalArgumentException("Could not load the garden")
         garden.scale(Vector3f(2.0f))
-        garden.rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
-        garden.translate(Vector3f(-0.2f, 0.0f, 0.0f)) // beim garten ist -x oben!!! lets goooooo
+        garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
+        garden.preTranslate(Vector3f(0f, 0.4f, -1f))
+
+
+        /** kleinere Gegenstände:
+         ** Setup Schaufel
+         */
+        shovel =
+            loadModel("assets/Schaufel/gardening_shovel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the shovel")
+        shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
+        shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
+        shovel.scale(Vector3f(0.27f))
+
+        /**
+         ** Setup Schnecke
+         */
+        snail = loadModel("assets/Schnecke/Mesh_Snail.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            ?: throw IllegalArgumentException("Could not load the shovel")
+        snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
+        snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
+        snail.scale(Vector3f(0.05f))
+
+        /**
+         ** Setup Hake
+         */
+        rake = loadModel("assets/Hake/rake.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            ?: throw IllegalArgumentException("Could not load the rake")
+        rake.scale(Vector3f(5f))
+        rake.rotate(0f, 0f, Math.toRadians(-90.0f))
+
+        /**
+         ** Setup Gartenschlauch
+         */
+        hose = loadModel("assets/Schlauch/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            ?: throw IllegalArgumentException("Could not load the hose")
+        hose.translate(
+            Vector3f(
+                0f,
+                0.2f,
+                -1.4f
+            )
+        ) // object space: y links, -y rechts, x runter, -x hoch, z vorwärts, -z rückwärts
+        hose.rotate(
+            Math.toRadians(-150f),
+            Math.toRadians(10.0f),
+            Math.toRadians(-17.0f)
+        ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
+        hose.scale(Vector3f(0.1f))
+
+
+        shovel.parent = garden
+        hose.parent = garden
+        /**
+         * Wenn der Garten nachträglich transformiert wird,
+         * bewegen sich ab hier die entsprechenden Gegenstände mit.
+         */
+        garden.scale(Vector3f(1.4f)) // Gesamtgarten größer gemacht
+        // nur kurz höher gemacht, damit man den original Boden nicht dadurch sieht.
+        // Sobald wir den alten Boden entfernen, kann diese Translation entfernt werden.
+        garden.preTranslate(Vector3f(0f, 0.2f, 0f))
 
         //setup camera
         camera = TronCamera(
@@ -158,7 +251,11 @@ class Scene(private val window: GameWindow) {
         staticShader.setUniform("shadingColor", changingColor)
         bike.render(staticShader)
 
-        garden!!.render(staticShader)
+        garden.render(staticShader)
+        shovel.render(staticShader)
+        hose.render(staticShader)
+        rake.render(staticShader)
+        snail.render(staticShader)
     }
 
     fun update(dt: Float, t: Float) {
