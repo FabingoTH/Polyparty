@@ -285,6 +285,9 @@ class Scene(private val window: GameWindow) {
     val gravityMul = 0.6f
     val groundLevel = 0f
 
+    var ropeRotation = Math.toRadians(360f)
+    var ropeSpeed = 2f
+
     fun update(dt: Float, t: Float) {
         val moveMul = 15.0f
         val rotateMul = 0.5f * Math.PI.toFloat()
@@ -308,6 +311,17 @@ class Scene(private val window: GameWindow) {
                 jumpVelocity = 15f
                 isJumping = true
             }
+        }
+
+        //bike.rotateAroundPoint(0.0f, dt * ropeSpeed, 0.0f, Vector3f(0f, 0f, 0f))
+        hose.rotateAroundPoint(0.0f, 0.0f, dt * ropeSpeed, Vector3f(0f, 1f, 0f))
+
+        ropeRotation = Math.max(0f, ropeRotation - dt * ropeSpeed)
+        if (ropeRotation == 0f) {
+            if (height <= 0.5f) {
+                System.out.println("You Lost!")
+            }
+            ropeRotation = Math.toRadians(360f)
         }
 
         calculateJump(dt)
