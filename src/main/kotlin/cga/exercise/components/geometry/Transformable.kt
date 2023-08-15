@@ -48,6 +48,13 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
     }
 
     /**
+     * Resets objects rotation back to normal.
+     */
+    fun setRotation(angleX: Float, angleY: Float, angleZ: Float) {
+        modelMatrix.setRotationXYZ(angleX, angleY, angleZ)
+    }
+
+    /**
      * Translates object based on its own coordinate system.
      * @param deltaPos delta positions
      */
@@ -98,7 +105,7 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
      */
     fun getXAxis(): Vector3f {
         return Vector3f(
-                modelMatrix.m00(), modelMatrix.m01(), modelMatrix.m02()
+            modelMatrix.m00(), modelMatrix.m01(), modelMatrix.m02()
         ).normalize()
     }
 
@@ -109,7 +116,7 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
      */
     fun getYAxis(): Vector3f {
         return Vector3f(
-                modelMatrix.m10(), modelMatrix.m11(), modelMatrix.m12()
+            modelMatrix.m10(), modelMatrix.m11(), modelMatrix.m12()
         ).normalize()
     }
 
@@ -120,7 +127,7 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
      */
     fun getZAxis(): Vector3f {
         return Vector3f(
-                modelMatrix.m20(), modelMatrix.m21(), modelMatrix.m22()
+            modelMatrix.m20(), modelMatrix.m21(), modelMatrix.m22()
         ).normalize()
     }
 
@@ -132,7 +139,7 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
     fun getWorldXAxis(): Vector3f {
         val wmat = getWorldModelMatrix()
         return Vector3f(
-                wmat.m00(), wmat.m01(), wmat.m02()
+            wmat.m00(), wmat.m01(), wmat.m02()
         ).normalize()
     }
 
@@ -144,7 +151,7 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
     fun getWorldYAxis(): Vector3f {
         val wmat = getWorldModelMatrix()
         return Vector3f(
-                wmat.m10(), wmat.m11(), wmat.m12()
+            wmat.m10(), wmat.m11(), wmat.m12()
         ).normalize()
     }
 
@@ -156,7 +163,7 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
     fun getWorldZAxis(): Vector3f {
         val wmat = getWorldModelMatrix()
         return Vector3f(
-                wmat.m20(), wmat.m21(), wmat.m22()
+            wmat.m20(), wmat.m21(), wmat.m22()
         ).normalize()
     }
 }
