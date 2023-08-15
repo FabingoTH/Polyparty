@@ -28,7 +28,7 @@ class Scene(private val window: GameWindow) {
 
     private val ground: Renderable
     private val bike: Renderable
-    private val skybox : Renderable
+    private val skybox: Renderable
 
     private val skyColor: Vector3f
 
@@ -104,18 +104,18 @@ class Scene(private val window: GameWindow) {
             ground.meshes.add(mesh)
         }
         bike = loadModel(
-            "assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
-            0.0f
+                "assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",
+                Math.toRadians(-90.0f),
+                Math.toRadians(90.0f),
+                0.0f
         ) ?: throw IllegalArgumentException("Could not load the model")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
 
         skybox = loadModel(
-            "assets/Skybox/anime_sky.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
-            0.0f
+                "assets/Skybox/anime_sky.obj",
+                Math.toRadians(-90.0f),
+                Math.toRadians(90.0f),
+                0.0f
         ) ?: throw IllegalArgumentException("Could not load the model")
         skybox.apply {
             scale(Vector3f(0.5f))
@@ -137,7 +137,7 @@ class Scene(private val window: GameWindow) {
          ** Setup Garten
          */
         garden = loadModel("assets/Garten/finGarden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the garden")
+                ?: throw IllegalArgumentException("Could not load the garden")
         garden.scale(Vector3f(2.0f))
         garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
         garden.preTranslate(Vector3f(0f, 0.4f, -1f))
@@ -147,8 +147,8 @@ class Scene(private val window: GameWindow) {
          ** Setup Schaufel
          */
         shovel =
-            loadModel("assets/Schaufel/gardening_shovel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-                ?: throw IllegalArgumentException("Could not load the shovel")
+                loadModel("assets/Schaufel/gardening_shovel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+                        ?: throw IllegalArgumentException("Could not load the shovel")
         shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
         shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
         shovel.scale(Vector3f(0.27f))
@@ -157,7 +157,7 @@ class Scene(private val window: GameWindow) {
          ** Setup Schnecke
          */
         snail = loadModel("assets/Schnecke/Mesh_Snail.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the shovel")
+                ?: throw IllegalArgumentException("Could not load the shovel")
         snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
         snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
         snail.scale(Vector3f(0.05f))
@@ -166,7 +166,7 @@ class Scene(private val window: GameWindow) {
          ** Setup Hake
          */
         rake = loadModel("assets/Hake/rake.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the rake")
+                ?: throw IllegalArgumentException("Could not load the rake")
         rake.scale(Vector3f(0.5f))
         rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
         rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
@@ -176,18 +176,18 @@ class Scene(private val window: GameWindow) {
          ** Setup Gartenschlauch
          */
         hose = loadModel("assets/Schlauch/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the hose")
+                ?: throw IllegalArgumentException("Could not load the hose")
         hose.translate(
-            Vector3f(
-                0f,
-                0.2f,
-                -1.4f
-            )
+                Vector3f(
+                        0f,
+                        0.2f,
+                        -1.4f
+                )
         ) // object space: y links, -y rechts, x runter, -x hoch, z vorwärts, -z rückwärts
         hose.rotate(
-            Math.toRadians(-150f),
-            Math.toRadians(10.0f),
-            Math.toRadians(-17.0f)
+                Math.toRadians(-150f),
+                Math.toRadians(10.0f),
+                Math.toRadians(-17.0f)
         ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
         hose.scale(Vector3f(0.1f))
 
@@ -202,17 +202,19 @@ class Scene(private val window: GameWindow) {
         // nur kurz höher gemacht, damit man den original Boden nicht dadurch sieht.
         // Sobald wir den alten Boden entfernen, kann diese Translation entfernt werden.
         garden.preTranslate(Vector3f(0f, 0.2f, 0f))
-
         //setup camera
         camera = TronCamera(
-            custom(window.framebufferWidth, window.framebufferHeight),
-            Math.toRadians(90.0f),
-            0.1f,
-            1000.0f
+                custom(window.framebufferWidth, window.framebufferHeight),
+                Math.toRadians(90.0f),
+                0.1f,
+                1000.0f
         )
+        /*
         camera.parent = bike
         camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         camera.translate(Vector3f(0.0f, 5.0f, 8.0f))
+        */
+        camera.translate(Vector3f(0.0f, 3.0f, 10.0f))
 
         groundColor = Vector3f(0.0f, 1.0f, 0.0f)
         skyColor = Vector3f(1.0f, 1.0f, 1.0f)
@@ -250,15 +252,15 @@ class Scene(private val window: GameWindow) {
         camera.bind(staticShader)
 
         val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
-         bikePointLight.lightColor = changingColor
+        bikePointLight.lightColor = changingColor
 
         // bind lights
         for (pointLight in pointLightList) {
-             pointLight.bind(staticShader)
+            pointLight.bind(staticShader)
         }
         staticShader.setUniform("numPointLights", pointLightList.size)
         for (spotLight in spotLightList) {
-             spotLight.bind(staticShader, camera.calculateViewMatrix())
+            spotLight.bind(staticShader, camera.calculateViewMatrix())
         }
         staticShader.setUniform("numSpotLights", spotLightList.size)
 
@@ -276,6 +278,12 @@ class Scene(private val window: GameWindow) {
         rake.render(staticShader)
         snail.render(staticShader)
     }
+
+    var jumpVelocity = 0f
+    var isJumping = false
+    var height = 0f
+    val gravityMul = 0.6f
+    val groundLevel = 0f
 
     fun update(dt: Float, t: Float) {
         val moveMul = 15.0f
@@ -295,6 +303,14 @@ class Scene(private val window: GameWindow) {
         if (window.getKeyState(GLFW_KEY_F)) {
             bikeSpotLight.rotate(Math.PI.toFloat() * dt, 0.0f, 0.0f)
         }
+        if (window.getKeyState(GLFW_KEY_SPACE)) {
+            if (!isJumping) {
+                jumpVelocity = 15f
+                isJumping = true
+            }
+        }
+
+        calculateJump(dt)
     }
 
     fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
@@ -305,8 +321,7 @@ class Scene(private val window: GameWindow) {
             val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
             if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
                 bike.rotate(0.0f, -yawAngle, 0.0f)
-            }
-            else{
+            } else {
                 camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
             }
         } else firstMouseMove = false
@@ -318,5 +333,18 @@ class Scene(private val window: GameWindow) {
 
     fun onMouseScroll(xoffset: Double, yoffset: Double) {
         camera.fov += Math.toRadians(yoffset.toFloat())
+    }
+
+    private fun calculateJump(deltaTime: Float) {
+        if (isJumping) {
+            val newHeight = height + deltaTime * jumpVelocity
+            bike.translate(Vector3f(0f, deltaTime * jumpVelocity, 0f))
+            jumpVelocity -= gravityMul
+            height = Math.max(0f, newHeight)
+            if (height == groundLevel) {
+                jumpVelocity = 0f
+                isJumping = false
+            }
+        }
     }
 }
