@@ -31,7 +31,6 @@ class Scene(private val window: GameWindow) {
     private val bike: Renderable
     private val skybox: Renderable
 
-    private val skyColor: Vector3f
 
     private val groundMaterial: Material
     private val groundColor: Vector3f
@@ -78,6 +77,12 @@ class Scene(private val window: GameWindow) {
      */
     private val hose: Renderable
 
+    /** Skybox (eher Skydome)
+     * -> Credits noch einfügen.
+     */
+    private val skybox: Renderable
+    private val skyColor: Vector3f
+
     private val ruler: Renderable
 
     //scene setup
@@ -113,16 +118,7 @@ class Scene(private val window: GameWindow) {
         ) ?: throw IllegalArgumentException("Could not load the model")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
 
-        skybox = loadModel(
-            "assets/Skybox/anime_sky.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
-            0.0f
-        ) ?: throw IllegalArgumentException("Could not load the model")
-        skybox.apply {
-            scale(Vector3f(0.5f))
-            rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
-        }
+
 
         /**
          * Orientierung im World-Koordinatensystem (Ausrichtung vom Spawn aus (vor der offenen Gartenseite mit Blick auf Garten))
@@ -159,7 +155,7 @@ class Scene(private val window: GameWindow) {
          ** Setup Schnecke
          */
         snail = loadModel("assets/Schnecke/Mesh_Snail.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the shovel")
+            ?: throw IllegalArgumentException("Could not load the snail")
         snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
         snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
         snail.scale(Vector3f(0.05f))
@@ -218,13 +214,27 @@ class Scene(private val window: GameWindow) {
             0.1f,
             1000.0f
         )
-
         camera.parent = bike
         camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         camera.translate(Vector3f(0.0f, 5.0f, 8.0f))
 
         groundColor = Vector3f(0.0f, 1.0f, 0.0f)
         skyColor = Vector3f(1.0f, 1.0f, 1.0f)
+
+        /**
+         * Setup Skybox
+         */
+
+        skybox = loadModel(
+            "assets/Skybox/anime_sky.obj",
+            Math.toRadians(-90.0f),
+            Math.toRadians(90.0f),
+            0.0f
+        ) ?: throw IllegalArgumentException("Could not load the sky")
+        skybox.apply {
+            scale(Vector3f(0.5f))
+            rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
+        }
 
         //bike point light
         bikePointLight =
