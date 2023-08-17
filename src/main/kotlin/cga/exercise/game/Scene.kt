@@ -29,8 +29,6 @@ class Scene(private val window: GameWindow) {
 
     private val ground: Renderable
     private val bike: Renderable
-    private val skybox: Renderable
-
 
     private val groundMaterial: Material
     private val groundColor: Vector3f
@@ -117,7 +115,6 @@ class Scene(private val window: GameWindow) {
             0.0f
         ) ?: throw IllegalArgumentException("Could not load the model")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
-
 
 
         /**
