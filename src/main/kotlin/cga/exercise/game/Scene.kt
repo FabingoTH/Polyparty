@@ -46,16 +46,45 @@ class Scene(private val window: GameWindow) {
     private var oldMouseY = 0.0
     private var firstMouseMove = true
 
+    /** GAME LOGIK
+     *
+     * Variablen für die Game-Logik.
+     *
+     */
+
+    /**
+     * Bewegung kann hiermit eingeschränkt werden
+     */
+    private var active_game: GameType
+
     /** PROJECT MODELS
      *  Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets".
      *  -> Texture Maps von Meike in Blender hinzugefügt.
      *  Alles in Scene ladbar mit vorhandener loadModel()-Methode (vgl. Motorcycle aus Praktikum).
-     *  --------------------------------------------------------------------------------------------
-     *  --------------------------------------------------------------------------------------------
+     */
+
+    private val objList: MutableList<Renderable> = mutableListOf()
+
+
+    /**
      *  Garten als Overworld-Model:
      *  -> Modell "Cloister Garden" von Bruno Oliveira via PolyPizza.
      */
     private val garden: Renderable
+
+    /**
+     * SPIELFIGUREN: Werden evtl. dynamisch gesetzt. Um die Steuerung des aktuellen main- und second characters
+     * definieren zu können, werden hier entsprechende "
+     */
+    private val mainChar: Renderable
+    private val secChar: Renderable
+
+
+    /**
+     * Eichhörnchen als Spielfigur:
+     * -> Modell "Lowpoly Squirrel" von Tipatat Chennavasin via PolyPizza.
+     */
+    private val squirrel: Renderable
 
     /** Haufen aus Schaufel, Hake und Schnecke:
      * Symbolisiert das "Memory"/Sortier-Spiel. Anvisieren und drücken auf "E" soll
@@ -136,7 +165,17 @@ class Scene(private val window: GameWindow) {
         garden.scale(Vector3f(2.0f))
         garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
         garden.preTranslate(Vector3f(0f, 0.4f, -1f))
+        objList.add(garden)
 
+        /**
+         * Setup Spielfigur Eichhörnchen
+         */
+        squirrel = loadModel(
+            "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
+        ) ?: throw IllegalArgumentException("Could not load the squirrel")
+        squirrel.scale(Vector3f(0.7f))
+        squirrel.translate(Vector3f(0f, 2f, 0f))
+        objList.add(squirrel)
 
         /** kleinere Gegenstände:
          ** Setup Schaufel
@@ -147,6 +186,7 @@ class Scene(private val window: GameWindow) {
         shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
         shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
         shovel.scale(Vector3f(0.27f))
+        objList.add(shovel)
 
         /**
          ** Setup Schnecke
@@ -156,6 +196,7 @@ class Scene(private val window: GameWindow) {
         snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
         snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
         snail.scale(Vector3f(0.05f))
+        objList.add(snail)
 
         /**
          ** Setup Hake
@@ -165,7 +206,7 @@ class Scene(private val window: GameWindow) {
         rake.scale(Vector3f(0.5f))
         rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
         rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
-
+        objList.add(rake)
 
         /**
          ** Setup Gartenschlauch
@@ -185,7 +226,7 @@ class Scene(private val window: GameWindow) {
             Math.toRadians(-17.0f)
         ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
         hose.scale(Vector3f(0.1f))
-
+        objList.add(hose)
 
         shovel.parent = garden
         hose.parent = garden
@@ -205,7 +246,7 @@ class Scene(private val window: GameWindow) {
             0.1f,
             1000.0f
         )
-        camera.parent = bike
+
         camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
@@ -248,7 +289,15 @@ class Scene(private val window: GameWindow) {
         // additional lights in the scene
         pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
         pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
-        spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
+        spotLightList.add(
+            SpotLight(
+                "spotLight[${spotLightList.size}]",
+                Vector3f(10.0f, 300.0f, 300.0f),
+                Vector3f(6.0f, 2.0f, 4.0f),
+                Math.toRadians(20.0f),
+                Math.toRadians(30.0f)
+            )
+        )
         spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
         //initial opengl state
@@ -258,6 +307,17 @@ class Scene(private val window: GameWindow) {
         glCullFace(GL_BACK); GLError.checkThrow()
         glEnable(GL_DEPTH_TEST); GLError.checkThrow()
         glDepthFunc(GL_LESS); GLError.checkThrow()
+
+        /**
+         * initial game state
+         */
+        active_game = GameType.NONE
+        mainChar = squirrel
+        camera.parent = mainChar
+        secChar = bike
+        secChar.translate(Vector3f(3f, 0f, 0f))
+        // secChar.parent = mainChar
+
     }
 
     fun render(dt: Float, t: Float) {
@@ -287,31 +347,67 @@ class Scene(private val window: GameWindow) {
         staticShader.setUniform("shadingColor", skyColor)
         skybox.render(staticShader)
 
-        garden.render(staticShader)
-        shovel.render(staticShader)
-        hose.render(staticShader)
-        rake.render(staticShader)
-        snail.render(staticShader)
+        //staticShader.setUniform("shadingColor", Vector3f(0.5f, 0.5f, 0.5f))
+
+        for (obj in objList) {
+            obj.render(staticShader)
+        }
     }
 
     fun update(dt: Float, t: Float) {
         val moveMul = 15.0f
         val rotateMul = 0.5f * Math.PI.toFloat()
-        if (window.getKeyState(GLFW_KEY_W)) {
-            bike.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
+
+        /**
+         * Wenn kein Minispiel aktiv ist:
+         * Steuerung Charakter 1: WASD - Jump: Space (TODO)
+         * Steuerung Charakter 2: IJKL(?) - Jump: Right Shift (TODO)
+         *
+         * TODO: coolere Laufanimation.
+         */
+        if (window.getKeyState(GLFW_KEY_W) && active_game == GameType.NONE) {
+            mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
         }
-        if (window.getKeyState(GLFW_KEY_S)) {
-            bike.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
+        if (window.getKeyState(GLFW_KEY_S) && active_game == GameType.NONE) {
+            mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
         }
-        if (window.getKeyState(GLFW_KEY_A) and window.getKeyState(GLFW_KEY_W)) {
-            bike.rotate(0.0f, dt * rotateMul, 0.0f)
+        if (window.getKeyState(GLFW_KEY_A) && active_game == GameType.NONE) {
+            mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
         }
-        if (window.getKeyState(GLFW_KEY_D) and window.getKeyState(GLFW_KEY_W)) {
-            bike.rotate(0.0f, -dt * rotateMul, 0.0f)
+        if (window.getKeyState(GLFW_KEY_D) && active_game == GameType.NONE) {
+            mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
         }
-        if (window.getKeyState(GLFW_KEY_F)) {
-            bikeSpotLight.rotate(Math.PI.toFloat() * dt, 0.0f, 0.0f)
+        // jump-Steuerung for fun? (space/right shift)
+
+
+        // überlegung: soll der zweite charakter überhaupt free roam steuerung bekommen?
+        // weil wir haben ja nur eine Kamera. Für die overworld
+
+
+        if (window.getKeyState(GLFW_KEY_I) && active_game == GameType.NONE) {
+            secChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
         }
+        if (window.getKeyState(GLFW_KEY_K) && active_game == GameType.NONE) {
+            secChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
+        }
+        if (window.getKeyState(GLFW_KEY_J) && active_game == GameType.NONE) {
+            secChar.rotate(0.0f, dt * rotateMul, 0.0f)
+        }
+        if (window.getKeyState(GLFW_KEY_L) && active_game == GameType.NONE) {
+            secChar.rotate(0.0f, -dt * rotateMul, 0.0f)
+        }
+
+
+        /** Steuerung für Jump Rope-Game
+         *
+         */
+        // insert
+
+        /** Steuerung für Memory-Game
+         *
+         */
+        // insert
+
     }
 
     fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
@@ -321,7 +417,7 @@ class Scene(private val window: GameWindow) {
             val yawAngle = (xpos - oldMouseX).toFloat() * 0.002f
             val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
             if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
-                bike.rotate(0.0f, -yawAngle, 0.0f)
+                mainChar.rotate(0.0f, -yawAngle, 0.0f)
             }
             else{
                 camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
