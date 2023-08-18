@@ -2,6 +2,7 @@ package cga.exercise.game
 
 import cga.exercise.components.camera.Aspectratio.Companion.custom
 import cga.exercise.components.camera.TronCamera
+import cga.exercise.components.collision.AABB
 import cga.exercise.components.geometry.Material
 import cga.exercise.components.geometry.Mesh
 import cga.exercise.components.geometry.Renderable
@@ -24,11 +25,12 @@ import org.lwjgl.opengl.GL11.*
  * Created by Fabian on 16.09.2017.
  */
 class Scene(private val window: GameWindow) {
-    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
+
+    private val staticShader: ShaderProgram =
+        ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
     private val ground: Renderable
     private val bike: Renderable
-
 
     private val groundMaterial: Material
     private val groundColor: Vector3f
@@ -45,6 +47,19 @@ class Scene(private val window: GameWindow) {
     private var oldMouseX = 0.0
     private var oldMouseY = 0.0
     private var firstMouseMove = true
+
+    /**
+     * Box to help figure out the coords for collision detection
+     */
+    private val colBox: Renderable
+
+    /**
+     * Liste mit allen hinzugefügten Objekten, für die es Collision Detection geben soll.
+     * Erleichtert Collision Detection in update()-Funktion.
+     */
+
+    private val objList: MutableList<Renderable> = mutableListOf()
+
 
     /** PROJECT MODELS
      *  Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets".
@@ -112,10 +127,22 @@ class Scene(private val window: GameWindow) {
             Math.toRadians(-90.0f),
             Math.toRadians(90.0f),
             0.0f
-        ) ?: throw IllegalArgumentException("Could not load the model")
+        ) ?: throw IllegalArgumentException("Could not load the bike")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
 
-
+        /** Setup Collision Detection and Logic
+         *
+         */
+        colBox = loadModel(
+            "assets/CollisionHelp/col.obj",
+            0f,
+            0f,
+            0f
+        ) ?: throw IllegalArgumentException("Could not load the cube")
+        objList.add(colBox)
+        //colBox.boundingBoxList[0] = AABB(min = Vector3f(-1f, 0f, -1f), max = Vector3f(1f, 0f, 1f))
+        colBox.scale(Vector3f(0.5f))
+        colBox.preTranslate(Vector3f(5.2f, 0f, -6f))
 
         /**
          * Orientierung im World-Koordinatensystem (Ausrichtung vom Spawn aus (vor der offenen Gartenseite mit Blick auf Garten))
@@ -136,7 +163,16 @@ class Scene(private val window: GameWindow) {
         garden.scale(Vector3f(2.0f))
         garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
         garden.preTranslate(Vector3f(0f, 0.4f, -1f))
+        objList.add(garden)
 
+        // bounding box links
+        garden.boundingBoxList[0] = AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(-4.6f, 0f, 3f))
+
+        // bounding box rechts
+        garden.boundingBoxList.add(AABB(min = Vector3f(4.9f, 0f, -6f), max = Vector3f(5.1f, 0f, 3f)))
+
+        // bounding box hinten
+        garden.boundingBoxList.add(AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(5.1f, 0f, -6f)))
 
         /** kleinere Gegenstände:
          ** Setup Schaufel
@@ -147,6 +183,7 @@ class Scene(private val window: GameWindow) {
         shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
         shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
         shovel.scale(Vector3f(0.27f))
+        objList.add(shovel)
 
         /**
          ** Setup Schnecke
@@ -156,6 +193,7 @@ class Scene(private val window: GameWindow) {
         snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
         snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
         snail.scale(Vector3f(0.05f))
+        objList.add(snail)
 
         /**
          ** Setup Hake
@@ -165,7 +203,7 @@ class Scene(private val window: GameWindow) {
         rake.scale(Vector3f(0.5f))
         rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
         rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
-
+        objList.add(rake)
 
         /**
          ** Setup Gartenschlauch
@@ -185,7 +223,7 @@ class Scene(private val window: GameWindow) {
             Math.toRadians(-17.0f)
         ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
         hose.scale(Vector3f(0.1f))
-
+        objList.add(hose)
 
         shovel.parent = garden
         hose.parent = garden
@@ -246,9 +284,29 @@ class Scene(private val window: GameWindow) {
         spotLightList.add(bikeSpotLight)
 
         // additional lights in the scene
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
-        spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(0.0f, 2.0f, 2.0f),
+                Vector3f(-10.0f, 2.0f, -10.0f)
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(2.0f, 0.0f, 0.0f),
+                Vector3f(10.0f, 2.0f, 10.0f)
+            )
+        )
+        spotLightList.add(
+            SpotLight(
+                "spotLight[${spotLightList.size}]",
+                Vector3f(10.0f, 300.0f, 300.0f),
+                Vector3f(6.0f, 2.0f, 4.0f),
+                Math.toRadians(20.0f),
+                Math.toRadians(30.0f)
+            )
+        )
         spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
         //initial opengl state
@@ -267,15 +325,15 @@ class Scene(private val window: GameWindow) {
         camera.bind(staticShader)
 
         val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
-         bikePointLight.lightColor = changingColor
+        bikePointLight.lightColor = changingColor
 
         // bind lights
         for (pointLight in pointLightList) {
-             pointLight.bind(staticShader)
+            pointLight.bind(staticShader)
         }
         staticShader.setUniform("numPointLights", pointLightList.size)
         for (spotLight in spotLightList) {
-             spotLight.bind(staticShader, camera.calculateViewMatrix())
+            spotLight.bind(staticShader, camera.calculateViewMatrix())
         }
         staticShader.setUniform("numSpotLights", spotLightList.size)
 
@@ -292,11 +350,56 @@ class Scene(private val window: GameWindow) {
         hose.render(staticShader)
         rake.render(staticShader)
         snail.render(staticShader)
+        colBox.render(staticShader)
     }
 
     fun update(dt: Float, t: Float) {
         val moveMul = 15.0f
         val rotateMul = 0.5f * Math.PI.toFloat()
+
+        /**
+         * Kollisionsdetektion
+         * Findet in update() statt, da sich die Position des beweglichen Objekts stetig ändern kann.
+         */
+
+        // collision check für bike - unser momentan sich bewegendes Hauptobjekt.
+        // später auch hier zu ersetzen mit Spielfiguren
+        // assumes bike has only one bounding box on index [0] (default bb must be overwritten when setting bb)
+        // WIP: testet nur physische collision mit gartenwänden
+        // collision mit hake etc soll dazu führen, die option zu bekommen, das spiel zu starten (sich zu teleportieren)
+
+        // wird hier gesetzt, damit die Bounding Box mit Bewegung des Objektes geupdated wird
+        bike.boundingBoxList[0] =
+            AABB(bike.getWorldPosition().add(Vector3f(-1f)), bike.getWorldPosition().add(Vector3f(1f)))
+
+        // test for colBox
+        /*
+        if(bike.boundingBoxList[0].collidesWith(colBox.boundingBoxList[0])) {
+            bike.preTranslate(bike.boundingBoxList[0].calculateOverlap(colBox.boundingBoxList[0]).mul(0.1f))
+        }
+
+         */
+
+        // if object collides with left hand wall
+        if (bike.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
+            bike.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
+        }
+
+        // if object collides with right hand wall
+        if (bike.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
+            bike.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
+        }
+
+        // if object collides with middle wall
+        if (bike.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
+            bike.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
+        }
+
+
+        /**
+         * Bewegung des Hauptobjektes
+         */
+
         if (window.getKeyState(GLFW_KEY_W)) {
             bike.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
         }
@@ -306,12 +409,15 @@ class Scene(private val window: GameWindow) {
         if (window.getKeyState(GLFW_KEY_A) and window.getKeyState(GLFW_KEY_W)) {
             bike.rotate(0.0f, dt * rotateMul, 0.0f)
         }
-        if (window.getKeyState(GLFW_KEY_D) and window.getKeyState(GLFW_KEY_W)) {
+
+        // kann jetzt auch im stand rotieren
+        if (window.getKeyState(GLFW_KEY_A)) {
+            bike.rotate(0.0f, dt * rotateMul, 0.0f)
+        }
+        if (window.getKeyState(GLFW_KEY_D)) {
             bike.rotate(0.0f, -dt * rotateMul, 0.0f)
         }
-        if (window.getKeyState(GLFW_KEY_F)) {
-            bikeSpotLight.rotate(Math.PI.toFloat() * dt, 0.0f, 0.0f)
-        }
+
     }
 
     fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
@@ -322,8 +428,7 @@ class Scene(private val window: GameWindow) {
             val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
             if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
                 bike.rotate(0.0f, -yawAngle, 0.0f)
-            }
-            else{
+            } else {
                 camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
             }
         } else firstMouseMove = false
