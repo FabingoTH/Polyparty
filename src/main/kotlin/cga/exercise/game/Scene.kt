@@ -40,6 +40,11 @@ class Scene(private val window: GameWindow) {
     private val bikeSpotLight: SpotLight
     private val spotLightList = mutableListOf<SpotLight>()
 
+    // Jump Animation Variabeln
+    private val jumpHeight = 0.05f
+    private val jumpFrequency = 25.0f // Anzahl der Hüpfbewegungen pro Sekunde
+    private var jumpPhase = 0.0f // Aktuelle Phase der Hüpfanimation
+
     //camera
     private val camera: TronCamera
     private var oldMouseX = 0.0
@@ -175,7 +180,6 @@ class Scene(private val window: GameWindow) {
         ) ?: throw IllegalArgumentException("Could not load the squirrel")
         squirrel.scale(Vector3f(0.7f))
         squirrel.translate(Vector3f(0f, 2f, 0f))
-        objList.add(squirrel)
 
         /** kleinere Gegenstände:
          ** Setup Schaufel
@@ -315,8 +319,12 @@ class Scene(private val window: GameWindow) {
         mainChar = squirrel
         camera.parent = mainChar
         secChar = bike
-        secChar.translate(Vector3f(3f, 0f, 0f))
-        // secChar.parent = mainChar
+        secChar.translate(Vector3f(1f, 0f, 1f))
+        secChar.parent = squirrel
+
+        objList.add(mainChar)
+        objList.add(secChar)
+
 
     }
 
@@ -365,37 +373,44 @@ class Scene(private val window: GameWindow) {
          *
          * TODO: coolere Laufanimation.
          */
-        if (window.getKeyState(GLFW_KEY_W) && active_game == GameType.NONE) {
-            mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
+
+        // GAMESTATE NONE - Steuerung
+
+        if (active_game == GameType.NONE) {
+
+            if (window.getKeyState(GLFW_KEY_W)) {
+                mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
+
+                // Hüpfanimation
+                jumpPhase += dt * jumpFrequency
+                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
+                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
+            }
+            if (window.getKeyState(GLFW_KEY_S)) {
+                mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
+
+                // Hüpfanimation
+                jumpPhase += dt * jumpFrequency
+                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
+                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
+            }
+
+            // Setzt den Character wieder direkt auf den Boden
+            if (!window.getKeyState(GLFW_KEY_W) && !window.getKeyState(GLFW_KEY_S)) {
+                val currentPosition = mainChar.getWorldPosition()
+                mainChar.translate(Vector3f(0.0f, -currentPosition.y, 0.0f))
+                jumpPhase = 0.0f
+            }
+            if (window.getKeyState(GLFW_KEY_A)) {
+                mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
+            }
+            if (window.getKeyState(GLFW_KEY_D)) {
+                mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
+            }
+
         }
-        if (window.getKeyState(GLFW_KEY_S) && active_game == GameType.NONE) {
-            mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_A) && active_game == GameType.NONE) {
-            mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
-        }
-        if (window.getKeyState(GLFW_KEY_D) && active_game == GameType.NONE) {
-            mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
-        }
-        // jump-Steuerung for fun? (space/right shift)
 
 
-        // überlegung: soll der zweite charakter überhaupt free roam steuerung bekommen?
-        // weil wir haben ja nur eine Kamera. Für die overworld
-
-
-        if (window.getKeyState(GLFW_KEY_I) && active_game == GameType.NONE) {
-            secChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_K) && active_game == GameType.NONE) {
-            secChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_J) && active_game == GameType.NONE) {
-            secChar.rotate(0.0f, dt * rotateMul, 0.0f)
-        }
-        if (window.getKeyState(GLFW_KEY_L) && active_game == GameType.NONE) {
-            secChar.rotate(0.0f, -dt * rotateMul, 0.0f)
-        }
 
 
         /** Steuerung für Jump Rope-Game
