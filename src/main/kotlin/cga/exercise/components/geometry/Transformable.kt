@@ -159,4 +159,16 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
                 wmat.m20(), wmat.m21(), wmat.m22()
         ).normalize()
     }
+
+    fun setPosition(newPosition: Vector3f) {
+        val translationMatrix = Matrix4f().translate(newPosition)
+        modelMatrix = translationMatrix.mul(Matrix4f(getModelMatrix()))
+    }
+
+    fun setWorldMatrix(matrix: Matrix4f) {
+        modelMatrix = Matrix4f(matrix)
+        parent?.let {
+            modelMatrix = it.getWorldModelMatrix().mul(modelMatrix)
+        }
+    }
 }

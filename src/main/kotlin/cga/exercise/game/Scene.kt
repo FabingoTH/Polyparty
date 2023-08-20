@@ -1,6 +1,7 @@
 package cga.exercise.game
 
 import cga.exercise.components.camera.Aspectratio.Companion.custom
+import cga.exercise.components.camera.OrbitCamera
 import cga.exercise.components.camera.TronCamera
 import cga.exercise.components.geometry.Material
 import cga.exercise.components.geometry.Mesh
@@ -45,7 +46,8 @@ class Scene(private val window: GameWindow) {
     private val jumpFrequency = 25.0f // Anzahl der Hüpfbewegungen pro Sekunde
     private var jumpPhase = 0.0f // Aktuelle Phase der Hüpfanimation
 
-    //camera
+    //
+    private val orbitCamera: OrbitCamera
     private val camera: TronCamera
     private var oldMouseX = 0.0
     private var oldMouseY = 0.0
@@ -179,7 +181,7 @@ class Scene(private val window: GameWindow) {
             "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
         ) ?: throw IllegalArgumentException("Could not load the squirrel")
         squirrel.scale(Vector3f(0.7f))
-        squirrel.translate(Vector3f(0f, 2f, 0f))
+        squirrel.translate(Vector3f(0f, 6f, 0f))
 
         /** kleinere Gegenstände:
          ** Setup Schaufel
@@ -268,7 +270,8 @@ class Scene(private val window: GameWindow) {
             0.0f
         ) ?: throw IllegalArgumentException("Could not load the sky")
         skybox.apply {
-            scale(Vector3f(0.5f))
+            scale(Vector3f(5.0f))
+            translate(Vector3f(0.0f,5.0f,0.0f))
             rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
         }
 
@@ -318,6 +321,7 @@ class Scene(private val window: GameWindow) {
         active_game = GameType.NONE
         mainChar = squirrel
         camera.parent = mainChar
+        orbitCamera = OrbitCamera(mainChar)
         secChar = bike
         secChar.translate(Vector3f(1f, 0f, 1f))
         secChar.parent = squirrel
@@ -332,7 +336,8 @@ class Scene(private val window: GameWindow) {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
         staticShader.use()
-        camera.bind(staticShader)
+        orbitCamera.bind(staticShader)
+        orbitCamera.updateCameraPosition()
 
         val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
          bikePointLight.lightColor = changingColor
@@ -411,8 +416,6 @@ class Scene(private val window: GameWindow) {
         }
 
 
-
-
         /** Steuerung für Jump Rope-Game
          *
          */
@@ -428,23 +431,48 @@ class Scene(private val window: GameWindow) {
     fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
 
     fun onMouseMove(xpos: Double, ypos: Double) {
-        if (!firstMouseMove) {
+
+
+        if (active_game == GameType.NONE) {
+            var azimuthRate: Float = 0.1f
+            var elevationRate: Float = 0.025f
+
+            if (firstMouseMove) {
+                val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
+                val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
+
+                // Ändere die elevation und azimuth Winkel der OrbitCamera
+                orbitCamera.azimuth -= yawAngle
+
+                // Begrenze die elevation, um nicht unter -45 Grad zu gehen
+                val newElevation = orbitCamera.elevation - pitchAngle
+                orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
+
+                // Speichere die Mausposition für den nächsten Aufruf
+                oldMouseX = xpos
+                oldMouseY = ypos
+            }
+        }
+
+        // Ursprünglicher MouseMove Code
+        /* if (!firstMouseMove) {
             val yawAngle = (xpos - oldMouseX).toFloat() * 0.002f
             val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
             if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
                 mainChar.rotate(0.0f, -yawAngle, 0.0f)
-            }
-            else{
+            } else {
                 camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
             }
         } else firstMouseMove = false
         oldMouseX = xpos
-        oldMouseY = ypos
+        oldMouseY = ypos */
     }
 
     fun cleanup() {}
 
     fun onMouseScroll(xoffset: Double, yoffset: Double) {
         camera.fov += Math.toRadians(yoffset.toFloat())
+        val zoom = orbitCamera.distance + Math.toRadians(yoffset.toFloat()) * -10.0f
+        orbitCamera.distance = zoom.coerceAtMost(7.0f) // Max Zoom Out
     }
 }
