@@ -24,7 +24,8 @@ import org.lwjgl.opengl.GL11.*
  * Created by Fabian on 16.09.2017.
  */
 class Scene(private val window: GameWindow) {
-    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
+    private val staticShader: ShaderProgram =
+        ShaderProgram("assets/shaders/cel_vert.glsl", "assets/shaders/cel_frag.glsl")
 
     private val ground: Renderable
     private val bike: Renderable
@@ -114,7 +115,6 @@ class Scene(private val window: GameWindow) {
             0.0f
         ) ?: throw IllegalArgumentException("Could not load the model")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
-
 
 
         /**
@@ -246,9 +246,29 @@ class Scene(private val window: GameWindow) {
         spotLightList.add(bikeSpotLight)
 
         // additional lights in the scene
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
-        spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(0.0f, 2.0f, 2.0f),
+                Vector3f(-10.0f, 2.0f, -10.0f)
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(2.0f, 0.0f, 0.0f),
+                Vector3f(10.0f, 2.0f, 10.0f)
+            )
+        )
+        spotLightList.add(
+            SpotLight(
+                "spotLight[${spotLightList.size}]",
+                Vector3f(10.0f, 300.0f, 300.0f),
+                Vector3f(6.0f, 2.0f, 4.0f),
+                Math.toRadians(20.0f),
+                Math.toRadians(30.0f)
+            )
+        )
         spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
         //initial opengl state
@@ -267,15 +287,15 @@ class Scene(private val window: GameWindow) {
         camera.bind(staticShader)
 
         val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
-         bikePointLight.lightColor = changingColor
+        bikePointLight.lightColor = changingColor
 
         // bind lights
         for (pointLight in pointLightList) {
-             pointLight.bind(staticShader)
+            pointLight.bind(staticShader)
         }
         staticShader.setUniform("numPointLights", pointLightList.size)
         for (spotLight in spotLightList) {
-             spotLight.bind(staticShader, camera.calculateViewMatrix())
+            spotLight.bind(staticShader, camera.calculateViewMatrix())
         }
         staticShader.setUniform("numSpotLights", spotLightList.size)
 
@@ -322,8 +342,7 @@ class Scene(private val window: GameWindow) {
             val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
             if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
                 bike.rotate(0.0f, -yawAngle, 0.0f)
-            }
-            else{
+            } else {
                 camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
             }
         } else firstMouseMove = false
