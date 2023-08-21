@@ -129,6 +129,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     private val skybox: Renderable
     private val skyColor: Vector3f
 
+
     //scene setup
     init {
 
@@ -407,8 +408,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
 
         /**
          * Wenn kein Minispiel aktiv ist:
-         * Steuerung Charakter 1: WASD - Jump: Space (TODO)
-         * Steuerung Charakter 2: IJKL(?) - Jump: Right Shift (TODO)
+         * Steuerung Charakter 1: WASD
          *
          * TODO: coolere Laufanimation.
          */
@@ -488,7 +488,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
             mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
         }
 
-
+        
     }
 
     override fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
