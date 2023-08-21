@@ -373,8 +373,7 @@ class Scene(private val window: GameWindow) {
 
         /**
          * Wenn kein Minispiel aktiv ist:
-         * Steuerung Charakter 1: WASD - Jump: Space (TODO)
-         * Steuerung Charakter 2: IJKL(?) - Jump: Right Shift (TODO)
+         * Steuerung Charakter 1: WASD
          *
          * TODO: coolere Laufanimation.
          */
@@ -413,6 +412,9 @@ class Scene(private val window: GameWindow) {
                 mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
             }
 
+            // Bounding Box erstellt für Position, in der Spiel gestartet werden können soll.
+
+
         }
 
 
@@ -425,6 +427,14 @@ class Scene(private val window: GameWindow) {
          *
          */
         // insert
+
+        if (active_game == GameType.MEMORIZE) {
+
+            // set camera to certain perspective
+            camera.translate(camera.getWorldPosition().negate())
+            camera.translate(Vector3f(-2f, -5f, 0f))
+            camera.lookAt(Vector3f(-3f, -5f, 0f))
+        }
 
     }
 
@@ -471,8 +481,12 @@ class Scene(private val window: GameWindow) {
     fun cleanup() {}
 
     fun onMouseScroll(xoffset: Double, yoffset: Double) {
-        camera.fov += Math.toRadians(yoffset.toFloat())
-        val zoom = orbitCamera.distance + Math.toRadians(yoffset.toFloat()) * -10.0f
-        orbitCamera.distance = zoom.coerceAtMost(7.0f) // Max Zoom Out
+
+        // disables mouse scroll for memory game
+        if (active_game != GameType.MEMORIZE) {
+            camera.fov += Math.toRadians(yoffset.toFloat())
+            val zoom = orbitCamera.distance + Math.toRadians(yoffset.toFloat()) * -10.0f
+            orbitCamera.distance = zoom.coerceAtMost(7.0f) // Max Zoom Out
+        }
     }
 }

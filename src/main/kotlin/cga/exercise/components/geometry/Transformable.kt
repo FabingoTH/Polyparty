@@ -1,6 +1,7 @@
 package cga.exercise.components.geometry
 
 import org.joml.Matrix4f
+import org.joml.Quaternionf
 import org.joml.Vector3f
 
 open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var parent: Transformable? = null) {
@@ -170,5 +171,20 @@ open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var par
         parent?.let {
             modelMatrix = it.getWorldModelMatrix().mul(modelMatrix)
         }
+    }
+
+    fun lookAt(target: Vector3f) {
+
+        val forward = getWorldZAxis().negate().normalize()
+
+        val directionToTarget = Vector3f(target).sub(getWorldPosition()).normalize()
+
+        // calculate the rotation quaternion to align the forward direction with the direction to the target.
+        val rotation = Quaternionf().rotationTo(forward, directionToTarget)
+
+        // convert rotation quaternion to a rotation matrix.
+        val rotationMatrix = Matrix4f().rotation(rotation)
+
+        modelMatrix = rotationMatrix.mul(getModelMatrix())
     }
 }
