@@ -2,7 +2,7 @@ package cga.exercise.game
 
 import cga.exercise.components.camera.Aspectratio.Companion.custom
 import cga.exercise.components.camera.TronCamera
-import cga.exercise.components.collision.AABB
+import cga.exercise.components.collision.*
 import cga.exercise.components.geometry.Material
 import cga.exercise.components.geometry.Mesh
 import cga.exercise.components.geometry.Renderable
@@ -83,9 +83,6 @@ class Scene(private val window: GameWindow) {
      *  -> Texture Maps von Meike in Blender hinzugefügt.
      *  Alles in Scene ladbar mit vorhandener loadModel()-Methode (vgl. Motorcycle aus Praktikum).
      */
-
-    private val objList: MutableList<Renderable> = mutableListOf()
-
 
     /**
      *  Garten als Overworld-Model:
@@ -455,6 +452,7 @@ class Scene(private val window: GameWindow) {
 
 
         /**
+         * TODO() Seit Merge mit "hopsender" Fortbewegung etwas buggy. gonna fix this when other minigame is done
          * Kollisionsdetektion
          * Findet in update() statt, da sich die Position des beweglichen Objekts stetig ändern kann.
          */
@@ -466,8 +464,8 @@ class Scene(private val window: GameWindow) {
         // collision mit hake etc soll dazu führen, die option zu bekommen, das spiel zu starten (sich zu teleportieren)
 
         // wird hier gesetzt, damit die Bounding Box mit Bewegung des Objektes geupdated wird
-        bike.boundingBoxList[0] =
-            AABB(bike.getWorldPosition().add(Vector3f(-1f)), bike.getWorldPosition().add(Vector3f(1f)))
+        mainChar.boundingBoxList[0] =
+            AABB(mainChar.getWorldPosition().add(Vector3f(-1f)), mainChar.getWorldPosition().add(Vector3f(1f)))
 
         // test for colBox
         /*
@@ -478,18 +476,18 @@ class Scene(private val window: GameWindow) {
          */
 
         // if object collides with left hand wall
-        if (bike.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
-            bike.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
+        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
+            mainChar.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
         }
 
         // if object collides with right hand wall
-        if (bike.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
-            bike.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
+        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
+            mainChar.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
         }
 
         // if object collides with middle wall
-        if (bike.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
-            bike.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
+        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
+            mainChar.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
         }
 
 
