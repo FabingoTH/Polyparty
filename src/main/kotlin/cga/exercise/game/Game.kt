@@ -1,8 +1,6 @@
 package cga.exercise.game
 
 import cga.exercise.game.scene.AScene
-import cga.exercise.game.scene.JumpRythmGameScene
-import cga.exercise.game.scene.MemorizeGameScene
 import cga.framework.GameWindow
 import org.lwjgl.glfw.GLFW
 
@@ -56,7 +54,16 @@ class Game(
 
         activeScene().update(dt, t)
 
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_O)) {
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_1)) {
+            changeScene(GameType.LOBBY)
+        }
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_2)) {
+            changeScene(GameType.JUMP_ROPE)
+        }
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_3)) {
+            changeScene(GameType.MEMORIZE)
+        }
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_4)) {
             changeScene(GameType.RACING)
         }
     }

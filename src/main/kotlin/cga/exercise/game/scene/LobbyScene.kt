@@ -16,24 +16,26 @@ import cga.exercise.game.scene.AScene
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
+import cga.framework.OBJLoader
 import cga.framework.OBJLoader.loadOBJ
 import org.joml.Math
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.*
 
 /**
  * Created by Fabian on 16.09.2017.
  */
 class LobbyScene(override val window: GameWindow) : AScene() {
-    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
-    // Jump Animation Variabeln
+    // HÜPF ANIMATION
     private val jumpHeight = 0.05f
     private val jumpFrequency = 25.0f // Anzahl der Hüpfbewegungen pro Sekunde
     private var jumpPhase = 0.0f // Aktuelle Phase der Hüpfanimation
 
+    // CAMERA
     private val orbitCamera: OrbitCamera
     private val camera: Camera
     private var oldMouseX = 0.0
@@ -42,23 +44,51 @@ class LobbyScene(override val window: GameWindow) : AScene() {
 
     private val objList: MutableList<Renderable> = mutableListOf()
 
-    private var active_game: GameType
+    // GROUND
+    private val groundMaterial : Material
+    private val ground : Renderable
+    private val groundColor: Vector3f
 
+    // OTHER OBJECTS
     private val garden: Renderable
-
     private val mainChar: Renderable
     private val secChar: Renderable
-
     private val squirrel: Renderable
-
     private val shovel: Renderable
     private val rake: Renderable
     private val snail: Renderable
     private val hose: Renderable
+
+    //SKYBOX
     private val skybox: Renderable
     private val skyColor: Vector3f
 
     init {
+
+        // GROUND
+        val groundDiff = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        groundDiff.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
+        val groundSpecular = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        groundSpecular.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
+        val groundEmit = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        groundEmit.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
+        groundMaterial = Material(groundDiff, groundEmit, groundSpecular, 60f, Vector2f(64.0f, 64.0f))
+        groundColor = Vector3f(0.8f)
+
+        //load an object and create a mesh
+        val gres = OBJLoader.loadOBJ("assets/models/ground.obj")
+        //Create the mesh
+        val stride = 8 * 4
+        val atr1 = VertexAttribute(3, GL11.GL_FLOAT, stride, 0)     //position attribute
+        val atr2 = VertexAttribute(2, GL11.GL_FLOAT, stride, 3 * 4) //texture coordinate attribute
+        val atr3 = VertexAttribute(3, GL11.GL_FLOAT, stride, 5 * 4) //normal attribute
+        val vertexAttributes = arrayOf(atr1, atr2, atr3)
+        //Create renderable
+        ground = Renderable()
+        for (m in gres.objects[0].meshes) {
+            val mesh = Mesh(m.vertexData, m.indexData, vertexAttributes, groundMaterial)
+            ground.meshes.add(mesh)
+        }
 
         garden =
             loadModel("assets/project_models/Garten/garden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
@@ -66,7 +96,6 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         garden.scale(Vector3f(2.0f))
         garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
         garden.preTranslate(Vector3f(0f, -0.5f, -1f))
-        objList.add(garden)
         objList.add(garden)
 
         // bounding box links
@@ -166,18 +195,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         }
 
 
-        //initial opengl state
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
-        glEnable(GL_CULL_FACE); GLError.checkThrow()
-        glFrontFace(GL_CCW); GLError.checkThrow()
-        glCullFace(GL_BACK); GLError.checkThrow()
-        glEnable(GL_DEPTH_TEST); GLError.checkThrow()
-        glDepthFunc(GL_LESS); GLError.checkThrow()
 
-        /**
-         * initial game state
-         */
-        active_game = GameType.LOBBY
         mainChar = squirrel
         camera.parent = mainChar
         orbitCamera = OrbitCamera(mainChar)
@@ -187,15 +205,18 @@ class LobbyScene(override val window: GameWindow) : AScene() {
 
         objList.add(mainChar)
         objList.add(secChar)
-
-
     }
 
     override fun render(dt: Float, t: Float) {
-        super.render(dt, t)
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
+        staticShader.use()
+        staticShader.setUniform("shadingColor", groundColor)
+        ground.render(staticShader)
 
         orbitCamera.bind(staticShader)
         orbitCamera.updateCameraPosition()
+
+
 
         // render objects
         staticShader.setUniform("shadingColor", skyColor)
@@ -209,112 +230,67 @@ class LobbyScene(override val window: GameWindow) : AScene() {
     }
 
     override fun update(dt: Float, t: Float) {
+
         val moveMul = 15.0f
         val rotateMul = 2f * Math.PI.toFloat()
 
+        if (window.getKeyState(GLFW_KEY_W)) {
+            mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
 
-        // GAMESTATE NONE - Steuerung
-
-        if (active_game == GameType.LOBBY) {
-
-            if (window.getKeyState(GLFW_KEY_W)) {
-                mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-
-                // Hüpfanimation
-                jumpPhase += dt * jumpFrequency
-                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
-                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
-            }
-            if (window.getKeyState(GLFW_KEY_S)) {
-                mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
-
-                // Hüpfanimation
-                jumpPhase += dt * jumpFrequency
-                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
-                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
-            }
-
-            // Setzt den Character wieder direkt auf den Boden
-            if (!window.getKeyState(GLFW_KEY_W) && !window.getKeyState(GLFW_KEY_S)) {
-                val currentPosition = mainChar.getWorldPosition()
-                mainChar.translate(Vector3f(0.0f, -currentPosition.y, 0.0f))
-                jumpPhase = 0.0f
-            }
-            if (window.getKeyState(GLFW_KEY_A)) {
-                mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
-            }
-            if (window.getKeyState(GLFW_KEY_D)) {
-                mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
-            }
-
+            // Hüpfanimation
+            jumpPhase += dt * jumpFrequency
+            val verticalOffset = jumpHeight * Math.sin(jumpPhase)
+            mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
         }
 
-        /**
-         * TODO() Seit Merge mit "hopsender" Fortbewegung etwas buggy. gonna fix this when other minigame is done
-         * Kollisionsdetektion
-         * Findet in update() statt, da sich die Position des beweglichen Objekts stetig ändern kann.
-         */
+        if (window.getKeyState(GLFW_KEY_S)) {
+            mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
 
-        // collision check für bike - unser momentan sich bewegendes Hauptobjekt.
-        // später auch hier zu ersetzen mit Spielfiguren
-        // assumes bike has only one bounding box on index [0] (default bb must be overwritten when setting bb)
-        // WIP: testet nur physische collision mit gartenwänden
-        // collision mit hake etc soll dazu führen, die option zu bekommen, das spiel zu starten (sich zu teleportieren)
-
-        // wird hier gesetzt, damit die Bounding Box mit Bewegung des Objektes geupdated wird
-        mainChar.boundingBoxList[0] =
-            AABB(mainChar.getWorldPosition().add(Vector3f(-1f)), mainChar.getWorldPosition().add(Vector3f(1f)))
-
-        // test for colBox
-        /*
-        if(bike.boundingBoxList[0].collidesWith(colBox.boundingBoxList[0])) {
-            bike.preTranslate(bike.boundingBoxList[0].calculateOverlap(colBox.boundingBoxList[0]).mul(0.1f))
+            // Hüpfanimation
+            jumpPhase += dt * jumpFrequency
+            val verticalOffset = jumpHeight * Math.sin(jumpPhase)
+            mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
         }
 
-         */
-
-        // if object collides with left hand wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
+        // Setzt den Character wieder direkt auf den Boden
+        if (!window.getKeyState(GLFW_KEY_W) && !window.getKeyState(GLFW_KEY_S)) {
+            val currentPosition = mainChar.getWorldPosition()
+            mainChar.translate(Vector3f(0.0f, -currentPosition.y, 0.0f))
+            jumpPhase = 0.0f
         }
 
-        // if object collides with right hand wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
+        if (window.getKeyState(GLFW_KEY_A)) {
+            mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
         }
 
-        // if object collides with middle wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
+        if (window.getKeyState(GLFW_KEY_D)) {
+            mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
         }
-
-
     }
 
     override fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
 
     override fun onMouseMove(xpos: Double, ypos: Double) {
 
-        if (active_game == GameType.LOBBY) {
-            var azimuthRate: Float = 0.1f
-            var elevationRate: Float = 0.025f
+        var azimuthRate: Float = 0.1f
+        var elevationRate: Float = 0.025f
 
-            if (firstMouseMove) {
-                val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
-                val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
+        if (firstMouseMove) {
+            val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
+            val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
 
-                // Ändere die elevation und azimuth Winkel der OrbitCamera
-                orbitCamera.azimuth -= yawAngle
+            // Ändere die elevation und azimuth Winkel der OrbitCamera
+            orbitCamera.azimuth -= yawAngle
 
-                // Begrenze die elevation, um nicht unter -45 Grad zu gehen
-                val newElevation = orbitCamera.elevation - pitchAngle
-                orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
+            // Begrenze die elevation, um nicht unter -45 Grad zu gehen
+            val newElevation = orbitCamera.elevation - pitchAngle
+            orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
 
-                // Speichere die Mausposition für den nächsten Aufruf
-                oldMouseX = xpos
-                oldMouseY = ypos
-            }
+            // Speichere die Mausposition für den nächsten Aufruf
+            oldMouseX = xpos
+            oldMouseY = ypos
         }
+
 
         // Ursprünglicher MouseMove Code
         /* if (!firstMouseMove) {

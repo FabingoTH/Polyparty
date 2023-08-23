@@ -27,105 +27,39 @@ import org.lwjgl.opengl.GL11.*
  * Created by Fabian on 16.09.2017.
  */
 class RacingGameScene(override val window: GameWindow) : AScene() {
-    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
+    /** GROUND **/
     private val ground: Renderable
-    private val bike: Renderable
-
-
     private val groundMaterial: Material
     private val groundColor: Vector3f
 
-    //Lights
+    /** LIGHTS **/
     private val bikePointLight: PointLight
     private val pointLightList = mutableListOf<PointLight>()
 
     private val bikeSpotLight: SpotLight
     private val spotLightList = mutableListOf<SpotLight>()
 
-    // Jump Animation Variabeln
-    private val jumpHeight = 0.05f
-    private val jumpFrequency = 25.0f // Anzahl der Hüpfbewegungen pro Sekunde
-    private var jumpPhase = 0.0f // Aktuelle Phase der Hüpfanimation
-
-    //
+    /** CAMERA **/
     private val orbitCamera: OrbitCamera
     private val camera: Camera
     private var oldMouseX = 0.0
     private var oldMouseY = 0.0
     private var firstMouseMove = true
 
-    /**
-     * Box to help figure out the coords for collision detection
-     */
-    private val colBox: Renderable
-
-    /**
-     * Liste mit allen hinzugefügten Objekten, für die es Collision Detection geben soll.
-     * Erleichtert Collision Detection in update()-Funktion.
-     */
-
+    /** OBJECTS **/
     private val objList: MutableList<Renderable> = mutableListOf()
-
-
-    /** GAME LOGIK
-     *
-     * Variablen für die Game-Logik.
-     *
-     */
-
-    /**
-     * Bewegung kann hiermit eingeschränkt werden
-     */
-    private var active_game: GameType
-
-    /** PROJECT MODELS
-     *  Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets".
-     *  -> Texture Maps von Meike in Blender hinzugefügt.
-     *  Alles in Scene ladbar mit vorhandener loadModel()-Methode (vgl. Motorcycle aus Praktikum).
-     */
-
-    /**
-     *  Garten als Overworld-Model:
-     *  -> Modell "Cloister Garden" von Bruno Oliveira via PolyPizza.
-     */
-    private val garden: Renderable
-
-    /**
-     * SPIELFIGUREN: Werden evtl. dynamisch gesetzt. Um die Steuerung des aktuellen main- und second characters
-     * definieren zu können, werden hier entsprechende "
-     */
+    private val bike: Renderable
     private val mainChar: Renderable
     private val secChar: Renderable
-
-
-    /**
-     * Eichhörnchen als Spielfigur:
-     * -> Modell "Lowpoly Squirrel" von Tipatat Chennavasin via PolyPizza.
-     */
     private val squirrel: Renderable
-
-    /** Haufen aus Schaufel, Hake und Schnecke:
-     * Symbolisiert das "Memory"/Sortier-Spiel. Anvisieren und drücken auf "E" soll
-     * teleportieren/Spiel starten.
-     * -> Modell "Garden Trovel" von Pookage Hayes via PolyPizza.
-     * -> Modell "Hand Rake" von Jarlan Perez via PolyPizza.
-     * -> Modell "Snail" von Poly by Google via PolyPizza.
-     */
     private val shovel: Renderable
     private val rake: Renderable
     private val snail: Renderable
-
-    /** Gartenschlauch:
-     * Symbolisiert das Springseil-Spiel. Anvisieren und drücken auf "E" soll
-     * teleportieren/Spiel starten.
-     * -> Modell "TIME HOTEL 4.28" von S. Paul Michael via PolyPizza.
-     */
     private val hose: Renderable
+    private val racetrack: Renderable
 
-    /** Skybox (eher Skydome)
-     * -> Credits noch einfügen.
-     */
+    /** SKYDOME **/
     private val skybox: Renderable
     private val skyColor: Vector3f
 
@@ -133,11 +67,11 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     init {
 
         //load textures
-        val groundDiff = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        val groundDiff = Texture2D("assets/textures/ground_diff.png", true)
         groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundSpecular = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        val groundSpecular = Texture2D("assets/textures/ground_spec.png", true)
         groundSpecular.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundEmit = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        val groundEmit = Texture2D("assets/textures/ground_emit.png", true)
         groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
         groundMaterial = Material(groundDiff, groundEmit, groundSpecular, 60f, Vector2f(64.0f, 64.0f))
 
@@ -163,54 +97,6 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         ) ?: throw IllegalArgumentException("Could not load the bike")
         bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
 
-        /** Setup Collision Detection and Logic
-         *
-         */
-        colBox = loadModel(
-            "assets/project_models/CollisionHelp/col.obj",
-            0f,
-            0f,
-            0f
-        ) ?: throw IllegalArgumentException("Could not load the cube")
-        //objList.add(colBox)
-        //colBox.boundingBoxList[0] = AABB(min = Vector3f(-1f, 0f, -1f), max = Vector3f(1f, 0f, 1f))
-        colBox.scale(Vector3f(0.5f))
-        colBox.preTranslate(Vector3f(5.2f, 0f, -6f))
-
-        /**
-         * Orientierung im World-Koordinatensystem (Ausrichtung vom Spawn aus (vor der offenen Gartenseite mit Blick auf Garten))
-         *
-         * x geht nach rechts, -x geht nach links
-         * y geht nach oben, -y geht nach unten
-         * z geht nach hinten (Richtung Cam/"Rückwärtsbewegung"), -z geht nach vorne (von Cam weg/in die Ferne)
-         *
-         * Falls der gesamte Garten verschoben werden soll, dies erst NACH den parent-Setzungen unten machen!! Sonst ist alles hinüber
-         *
-         */
-
-        /** Overworld-Setup:
-         ** Setup Garten
-         */
-        garden =
-            loadModel("assets/project_models/Garten/garden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-                ?: throw IllegalArgumentException("Could not load the garden")
-        garden.scale(Vector3f(2.0f))
-        garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
-        garden.preTranslate(Vector3f(0f, -0.5f, -1f))
-        objList.add(garden)
-        objList.add(garden)
-
-        // bounding box links
-        garden.boundingBoxList[0] = AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(-4.6f, 0f, 3f))
-
-        // bounding box rechts
-        garden.boundingBoxList.add(AABB(min = Vector3f(4.9f, 0f, -6f), max = Vector3f(5.1f, 0f, 3f)))
-
-        // bounding box hinten
-        garden.boundingBoxList.add(AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(5.1f, 0f, -6f)))
-        /**
-         * Setup Spielfigur Eichhörnchen
-         */
         squirrel = loadModel(
             "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
         ) ?: throw IllegalArgumentException("Could not load the squirrel")
@@ -240,7 +126,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
             ?: throw IllegalArgumentException("Could not load the snail")
         snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
         snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
-        snail.scale(Vector3f(0.05f))
+        snail.scale(Vector3f(1.0f))
         objList.add(snail)
 
         /**
@@ -274,16 +160,16 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         hose.scale(Vector3f(0.1f))
         objList.add(hose)
 
-        shovel.parent = garden
-        hose.parent = garden
-        /**
-         * Wenn der Garten nachträglich transformiert wird,
-         * bewegen sich ab hier die entsprechenden Gegenstände mit.
-         */
-        garden.scale(Vector3f(1.4f)) // Gesamtgarten größer gemacht
-        // nur kurz höher gemacht, damit man den original Boden nicht dadurch sieht.
-        // Sobald wir den alten Boden entfernen, kann diese Translation entfernt werden.
-        garden.preTranslate(Vector3f(0f, 0.2f, 0f))
+        racetrack =
+            loadModel("assets/project_models/Rennstrecke/Rennstrecke.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the hose")
+        racetrack.apply {
+            rotate(0f, Math.toRadians(-90.0f), Math.toRadians(-90f))
+            translate(Vector3f(2f,-10f,-10f))
+            scale(Vector3f(0.6f))
+        }
+
+        objList.add(racetrack)
 
         //setup camera
         camera = Camera(
@@ -296,8 +182,8 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
-        groundColor = Vector3f(0.8f)
-        skyColor = Vector3f(0f)
+        groundColor = Vector3f(0.0f, 1.0f,0.0f)
+        skyColor = Vector3f(1f)
 
         /**
          * Setup Skybox
@@ -315,28 +201,31 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
             rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
         }
 
-        //bike point light
+        //bike pointlight
         bikePointLight =
-            PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 0.0f), Vector3f(0.0f, 0.5f, 0.0f))
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(0.0f, 2.0f, 0.0f),
+                Vector3f(0.0f, 0.5f, 0.0f))
         bikePointLight.parent = bike
         pointLightList.add(bikePointLight)
 
-        //bike spot light
+        //bike spotlight
         bikeSpotLight = SpotLight(
             "spotLight[${spotLightList.size}]",
             Vector3f(1f),
             Vector3f(0f, 1f, -2f),
-            Math.toRadians(20.0f),
-            Math.toRadians(30.0f)
+            Math.toRadians(0.0f),
+            Math.toRadians(0.0f)
         )
-        bikeSpotLight.rotate(Math.toRadians(-10.0f), 0.0f, 0.0f)
+        //bikeSpotLight.rotate(Math.toRadians(-10.0f), 0.0f, 0.0f)
         bikeSpotLight.parent = bike
         spotLightList.add(bikeSpotLight)
 
         // additional lights in the scene
         pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
         pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
-        // spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
+        spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
         spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
         //initial opengl state
@@ -347,28 +236,21 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         glEnable(GL_DEPTH_TEST); GLError.checkThrow()
         glDepthFunc(GL_LESS); GLError.checkThrow()
 
-        /**
-         * initial game state
-         */
-        active_game = GameType.LOBBY
-        mainChar = squirrel
+
+        mainChar = bike
         camera.parent = mainChar
         orbitCamera = OrbitCamera(mainChar)
-        secChar = bike
+        secChar = snail
         secChar.translate(Vector3f(1f, 0f, 1f))
         secChar.parent = squirrel
 
         objList.add(mainChar)
         objList.add(secChar)
 
-
     }
 
     override fun render(dt: Float, t: Float) {
-        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-
         super.render(dt, t)
-
 
         orbitCamera.bind(staticShader)
         orbitCamera.updateCameraPosition()
@@ -387,8 +269,8 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         staticShader.setUniform("numSpotLights", spotLightList.size)
 
         // render objects
-        staticShader.setUniform("shadingColor", groundColor)
-        ground.render(staticShader)
+        //staticShader.setUniform("shadingColor", groundColor)
+        //ground.render(staticShader)
         staticShader.setUniform("shadingColor", changingColor)
         bike.render(staticShader)
         staticShader.setUniform("shadingColor", skyColor)
@@ -402,140 +284,50 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     }
 
     override fun update(dt: Float, t: Float) {
-        val moveMul = 15.0f
-        val rotateMul = 2f * Math.PI.toFloat()
+        val moveMul = 30.0f
+        val rotateMul = 1f * Math.PI.toFloat()
 
-        /**
-         * Wenn kein Minispiel aktiv ist:
-         * Steuerung Charakter 1: WASD - Jump: Space (TODO)
-         * Steuerung Charakter 2: IJKL(?) - Jump: Right Shift (TODO)
-         *
-         * TODO: coolere Laufanimation.
-         */
-
-        // GAMESTATE NONE - Steuerung
-
-        if (active_game == GameType.LOBBY) {
-
-            if (window.getKeyState(GLFW_KEY_W)) {
-                mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-
-                // Hüpfanimation
-                jumpPhase += dt * jumpFrequency
-                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
-                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
-            }
-            if (window.getKeyState(GLFW_KEY_S)) {
-                mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
-
-                // Hüpfanimation
-                jumpPhase += dt * jumpFrequency
-                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
-                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
-            }
-
-            // Setzt den Character wieder direkt auf den Boden
-            if (!window.getKeyState(GLFW_KEY_W) && !window.getKeyState(GLFW_KEY_S)) {
-                val currentPosition = mainChar.getWorldPosition()
-                mainChar.translate(Vector3f(0.0f, -currentPosition.y, 0.0f))
-                jumpPhase = 0.0f
-            }
-            if (window.getKeyState(GLFW_KEY_A)) {
-                mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
-            }
-            if (window.getKeyState(GLFW_KEY_D)) {
-                mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
-            }
-
+        if (window.getKeyState(GLFW_KEY_W)) {
+            mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
         }
-
-        /**
-         * TODO() Seit Merge mit "hopsender" Fortbewegung etwas buggy. gonna fix this when other minigame is done
-         * Kollisionsdetektion
-         * Findet in update() statt, da sich die Position des beweglichen Objekts stetig ändern kann.
-         */
-
-        // collision check für bike - unser momentan sich bewegendes Hauptobjekt.
-        // später auch hier zu ersetzen mit Spielfiguren
-        // assumes bike has only one bounding box on index [0] (default bb must be overwritten when setting bb)
-        // WIP: testet nur physische collision mit gartenwänden
-        // collision mit hake etc soll dazu führen, die option zu bekommen, das spiel zu starten (sich zu teleportieren)
-
-        // wird hier gesetzt, damit die Bounding Box mit Bewegung des Objektes geupdated wird
-        mainChar.boundingBoxList[0] =
-            AABB(mainChar.getWorldPosition().add(Vector3f(-1f)), mainChar.getWorldPosition().add(Vector3f(1f)))
-
-        // test for colBox
-        /*
-        if(bike.boundingBoxList[0].collidesWith(colBox.boundingBoxList[0])) {
-            bike.preTranslate(bike.boundingBoxList[0].calculateOverlap(colBox.boundingBoxList[0]).mul(0.1f))
+        if (window.getKeyState(GLFW_KEY_S)) {
+            mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
         }
-
-         */
-
-        // if object collides with left hand wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
+        if (window.getKeyState(GLFW_KEY_A)) {
+            mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
         }
-
-        // if object collides with right hand wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
+        if (window.getKeyState(GLFW_KEY_D)) {
+            mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
         }
-
-        // if object collides with middle wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
-        }
-
-
     }
 
     override fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
 
     override fun onMouseMove(xpos: Double, ypos: Double) {
 
-        if (active_game == GameType.LOBBY) {
-            var azimuthRate: Float = 0.1f
-            var elevationRate: Float = 0.025f
+        var azimuthRate: Float = 0.1f
+        var elevationRate: Float = 0.025f
 
-            if (firstMouseMove) {
-                val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
-                val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
+        if (firstMouseMove) {
+            val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
+            val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
 
-                // Ändere die elevation und azimuth Winkel der OrbitCamera
-                orbitCamera.azimuth -= yawAngle
+            // Ändere die elevation und azimuth Winkel der OrbitCamera
+            orbitCamera.azimuth -= yawAngle
 
-                // Begrenze die elevation, um nicht unter -45 Grad zu gehen
-                val newElevation = orbitCamera.elevation - pitchAngle
-                orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
+            // Begrenze die elevation, um nicht unter -45 Grad zu gehen
+            val newElevation = orbitCamera.elevation - pitchAngle
+            orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
 
-                // Speichere die Mausposition für den nächsten Aufruf
-                oldMouseX = xpos
-                oldMouseY = ypos
-            }
+            // Speichere die Mausposition für den nächsten Aufruf
+            oldMouseX = xpos
+            oldMouseY = ypos
         }
-
-        // Ursprünglicher MouseMove Code
-        /* if (!firstMouseMove) {
-            val yawAngle = (xpos - oldMouseX).toFloat() * 0.002f
-            val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
-            if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
-                mainChar.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                bike.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
-            }
-        } else firstMouseMove = false
-        oldMouseX = xpos
-        oldMouseY = ypos */
     }
 
     fun cleanup() {}
 
     override fun onMouseScroll(xoffset: Double, yoffset: Double) {
-        camera.fov += Math.toRadians(yoffset.toFloat())
         val zoom = orbitCamera.distance + Math.toRadians(yoffset.toFloat()) * -10.0f
         orbitCamera.distance = zoom.coerceAtMost(7.0f) // Max Zoom Out
     }
