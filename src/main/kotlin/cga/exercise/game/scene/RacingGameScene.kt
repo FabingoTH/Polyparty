@@ -228,6 +228,10 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
         shovel.scale(Vector3f(0.27f))
         objList.add(shovel)
+        shovel.boundingBoxList[0] = AABB(
+            shovel.getWorldPosition().add(Vector3f(-2f, 0f, -1f)),
+            shovel.getWorldPosition().add(Vector3f(2f, 0f, 1f))
+        )
 
         /**
          ** Setup Schnecke
@@ -274,6 +278,9 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
         hose.scale(Vector3f(0.1f))
         objList.add(hose)
+        // bounding box, damit spielstart-aktion generiert werden kann
+        hose.boundingBoxList[0] =
+            AABB(hose.getWorldPosition().add(Vector3f(-1f)), hose.getWorldPosition().add(Vector3f(1f)))
 
         shovel.parent = garden
         hose.parent = garden
@@ -455,23 +462,16 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
          * Findet in update() statt, da sich die Position des beweglichen Objekts stetig ändern kann.
          */
 
-        // collision check für bike - unser momentan sich bewegendes Hauptobjekt.
-        // später auch hier zu ersetzen mit Spielfiguren
-        // assumes bike has only one bounding box on index [0] (default bb must be overwritten when setting bb)
+        // assumes mainChar has only one bounding box on index [0] (default BB must be overwritten when setting BB)
         // WIP: testet nur physische collision mit gartenwänden
         // collision mit hake etc soll dazu führen, die option zu bekommen, das spiel zu starten (sich zu teleportieren)
 
         // wird hier gesetzt, damit die Bounding Box mit Bewegung des Objektes geupdated wird
         mainChar.boundingBoxList[0] =
-            AABB(mainChar.getWorldPosition().add(Vector3f(-1f)), mainChar.getWorldPosition().add(Vector3f(1f)))
-
-        // test for colBox
-        /*
-        if(bike.boundingBoxList[0].collidesWith(colBox.boundingBoxList[0])) {
-            bike.preTranslate(bike.boundingBoxList[0].calculateOverlap(colBox.boundingBoxList[0]).mul(0.1f))
-        }
-
-         */
+            AABB(
+                mainChar.getWorldPosition().add(Vector3f(-1f, 0f, -2f)),
+                mainChar.getWorldPosition().add(Vector3f(4f, 0f, 2f))
+            )
 
         // if object collides with left hand wall
         if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
