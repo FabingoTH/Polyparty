@@ -1,5 +1,6 @@
 package cga.framework
 
+import cga.exercise.game.GameType
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.*
 import org.lwjgl.opengl.GL
@@ -263,6 +264,7 @@ abstract class GameWindow(
      */
     protected open fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
 
+    protected open fun changeScene(newGame: GameType) {}
     /**
      * Is called when the default frame buffer size changes (i.e. through resizing the window)
      * @param width     new frame buffer width

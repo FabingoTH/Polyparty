@@ -4,7 +4,7 @@ import cga.exercise.components.geometry.Transformable
 import org.joml.Matrix4f
 import org.joml.Vector3f
 
-class OrbitCamera(private val target: Transformable) : TronCamera() {
+class OrbitCamera(private val target: Transformable) : Camera() {
     var distance: Float = 5.0f // Anfangsabstand zur Zielposition
         set(value) {
             field = value.coerceIn(minDistance, maxDistance) // Setzt den gültigen Wertebereich

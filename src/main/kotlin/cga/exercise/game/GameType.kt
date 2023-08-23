@@ -1,5 +1,5 @@
 package cga.exercise.game
 
 enum class GameType {
-    NONE, JUMP_ROPE, MEMORIZE
+    LOBBY, JUMP_ROPE, MEMORIZE, RACING
 }

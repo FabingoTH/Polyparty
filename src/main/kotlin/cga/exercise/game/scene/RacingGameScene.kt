@@ -1,7 +1,7 @@
 package cga.exercise.game
 
 import cga.exercise.components.camera.Aspectratio.Companion.custom
-import cga.exercise.components.camera.TronCamera
+import cga.exercise.components.camera.Camera
 import cga.exercise.components.collision.*
 import cga.exercise.components.geometry.Material
 import cga.exercise.components.geometry.Mesh
@@ -12,6 +12,7 @@ import cga.exercise.components.light.SpotLight
 import cga.exercise.components.shader.ShaderProgram
 import cga.exercise.components.camera.OrbitCamera
 import cga.exercise.components.texture.Texture2D
+import cga.exercise.game.scene.AScene
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
@@ -25,7 +26,7 @@ import org.lwjgl.opengl.GL11.*
 /**
  * Created by Fabian on 16.09.2017.
  */
-class Scene(private val window: GameWindow) {
+class RacingGameScene(override val window: GameWindow) : AScene() {
     private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
     private val ground: Renderable
@@ -49,7 +50,7 @@ class Scene(private val window: GameWindow) {
 
     //
     private val orbitCamera: OrbitCamera
-    private val camera: TronCamera
+    private val camera: Camera
     private var oldMouseX = 0.0
     private var oldMouseY = 0.0
     private var firstMouseMove = true
@@ -128,15 +129,15 @@ class Scene(private val window: GameWindow) {
     private val skybox: Renderable
     private val skyColor: Vector3f
 
-
     //scene setup
     init {
+
         //load textures
-        val groundDiff = Texture2D("assets/textures/ground_diff.png", true)
+        val groundDiff = Texture2D("assets/textures/stone_floor/tiles.png", true)
         groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundSpecular = Texture2D("assets/textures/ground_spec.png", true)
+        val groundSpecular = Texture2D("assets/textures/stone_floor/tiles.png", true)
         groundSpecular.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundEmit = Texture2D("assets/textures/ground_emit.png", true)
+        val groundEmit = Texture2D("assets/textures/stone_floor/tiles.png", true)
         groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
         groundMaterial = Material(groundDiff, groundEmit, groundSpecular, 60f, Vector2f(64.0f, 64.0f))
 
@@ -171,7 +172,7 @@ class Scene(private val window: GameWindow) {
             0f,
             0f
         ) ?: throw IllegalArgumentException("Could not load the cube")
-        objList.add(colBox)
+        //objList.add(colBox)
         //colBox.boundingBoxList[0] = AABB(min = Vector3f(-1f, 0f, -1f), max = Vector3f(1f, 0f, 1f))
         colBox.scale(Vector3f(0.5f))
         colBox.preTranslate(Vector3f(5.2f, 0f, -6f))
@@ -285,7 +286,7 @@ class Scene(private val window: GameWindow) {
         garden.preTranslate(Vector3f(0f, 0.2f, 0f))
 
         //setup camera
-        camera = TronCamera(
+        camera = Camera(
             custom(window.framebufferWidth, window.framebufferHeight),
             Math.toRadians(90.0f),
             0.1f,
@@ -295,8 +296,8 @@ class Scene(private val window: GameWindow) {
         camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
-        groundColor = Vector3f(0.0f, 1.0f, 0.0f)
-        skyColor = Vector3f(1.0f, 1.0f, 1.0f)
+        groundColor = Vector3f(0.8f)
+        skyColor = Vector3f(0f)
 
         /**
          * Setup Skybox
@@ -323,8 +324,8 @@ class Scene(private val window: GameWindow) {
         //bike spot light
         bikeSpotLight = SpotLight(
             "spotLight[${spotLightList.size}]",
-            Vector3f(3.0f, 3.0f, 3.0f),
-            Vector3f(0.0f, 1.0f, -2.0f),
+            Vector3f(1f),
+            Vector3f(0f, 1f, -2f),
             Math.toRadians(20.0f),
             Math.toRadians(30.0f)
         )
@@ -335,7 +336,7 @@ class Scene(private val window: GameWindow) {
         // additional lights in the scene
         pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
         pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
-        spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
+        // spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
         spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
         //initial opengl state
@@ -349,7 +350,7 @@ class Scene(private val window: GameWindow) {
         /**
          * initial game state
          */
-        active_game = GameType.NONE
+        active_game = GameType.LOBBY
         mainChar = squirrel
         camera.parent = mainChar
         orbitCamera = OrbitCamera(mainChar)
@@ -363,10 +364,12 @@ class Scene(private val window: GameWindow) {
 
     }
 
-    fun render(dt: Float, t: Float) {
+    override fun render(dt: Float, t: Float) {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
-        staticShader.use()
+        super.render(dt, t)
+
+
         orbitCamera.bind(staticShader)
         orbitCamera.updateCameraPosition()
 
@@ -398,9 +401,9 @@ class Scene(private val window: GameWindow) {
         }
     }
 
-    fun update(dt: Float, t: Float) {
+    override fun update(dt: Float, t: Float) {
         val moveMul = 15.0f
-        val rotateMul = 0.5f * Math.PI.toFloat()
+        val rotateMul = 2f * Math.PI.toFloat()
 
         /**
          * Wenn kein Minispiel aktiv ist:
@@ -412,7 +415,7 @@ class Scene(private val window: GameWindow) {
 
         // GAMESTATE NONE - Steuerung
 
-        if (active_game == GameType.NONE) {
+        if (active_game == GameType.LOBBY) {
 
             if (window.getKeyState(GLFW_KEY_W)) {
                 mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
@@ -445,18 +448,6 @@ class Scene(private val window: GameWindow) {
             }
 
         }
-
-
-        /** Steuerung für Jump Rope-Game
-         *
-         */
-        // insert
-
-        /** Steuerung für Memory-Game
-         *
-         */
-        // insert
-
 
         /**
          * TODO() Seit Merge mit "hopsender" Fortbewegung etwas buggy. gonna fix this when other minigame is done
@@ -497,15 +488,14 @@ class Scene(private val window: GameWindow) {
             mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
         }
 
-        
+
     }
 
-    fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
+    override fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
 
-    fun onMouseMove(xpos: Double, ypos: Double) {
+    override fun onMouseMove(xpos: Double, ypos: Double) {
 
-
-        if (active_game == GameType.NONE) {
+        if (active_game == GameType.LOBBY) {
             var azimuthRate: Float = 0.1f
             var elevationRate: Float = 0.025f
 
@@ -544,9 +534,11 @@ class Scene(private val window: GameWindow) {
 
     fun cleanup() {}
 
-    fun onMouseScroll(xoffset: Double, yoffset: Double) {
+    override fun onMouseScroll(xoffset: Double, yoffset: Double) {
         camera.fov += Math.toRadians(yoffset.toFloat())
         val zoom = orbitCamera.distance + Math.toRadians(yoffset.toFloat()) * -10.0f
         orbitCamera.distance = zoom.coerceAtMost(7.0f) // Max Zoom Out
     }
+
+    override fun changeScene(newScene: GameType) {}
 }
