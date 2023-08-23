@@ -27,7 +27,6 @@ import org.lwjgl.opengl.GL11.*
  * Created by Fabian on 16.09.2017.
  */
 class LobbyScene(override val window: GameWindow) : AScene() {
-    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
     // Jump Animation Variabeln
     private val jumpHeight = 0.05f
@@ -41,8 +40,6 @@ class LobbyScene(override val window: GameWindow) : AScene() {
     private var firstMouseMove = true
 
     private val objList: MutableList<Renderable> = mutableListOf()
-
-    private var active_game: GameType
 
     private val garden: Renderable
 
@@ -177,7 +174,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         /**
          * initial game state
          */
-        active_game = GameType.LOBBY
+
         mainChar = squirrel
         camera.parent = mainChar
         orbitCamera = OrbitCamera(mainChar)
@@ -215,9 +212,8 @@ class LobbyScene(override val window: GameWindow) : AScene() {
 
         // GAMESTATE NONE - Steuerung
 
-        if (active_game == GameType.LOBBY) {
 
-            if (window.getKeyState(GLFW_KEY_W)) {
+        if (window.getKeyState(GLFW_KEY_W)) {
                 mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
 
                 // Hüpfanimation
@@ -247,31 +243,13 @@ class LobbyScene(override val window: GameWindow) : AScene() {
                 mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
             }
 
-        }
 
-        /**
-         * TODO() Seit Merge mit "hopsender" Fortbewegung etwas buggy. gonna fix this when other minigame is done
-         * Kollisionsdetektion
-         * Findet in update() statt, da sich die Position des beweglichen Objekts stetig ändern kann.
-         */
 
-        // collision check für bike - unser momentan sich bewegendes Hauptobjekt.
-        // später auch hier zu ersetzen mit Spielfiguren
-        // assumes bike has only one bounding box on index [0] (default bb must be overwritten when setting bb)
-        // WIP: testet nur physische collision mit gartenwänden
-        // collision mit hake etc soll dazu führen, die option zu bekommen, das spiel zu starten (sich zu teleportieren)
 
-        // wird hier gesetzt, damit die Bounding Box mit Bewegung des Objektes geupdated wird
+
         mainChar.boundingBoxList[0] =
             AABB(mainChar.getWorldPosition().add(Vector3f(-1f)), mainChar.getWorldPosition().add(Vector3f(1f)))
 
-        // test for colBox
-        /*
-        if(bike.boundingBoxList[0].collidesWith(colBox.boundingBoxList[0])) {
-            bike.preTranslate(bike.boundingBoxList[0].calculateOverlap(colBox.boundingBoxList[0]).mul(0.1f))
-        }
-
-         */
 
         // if object collides with left hand wall
         if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
@@ -295,19 +273,18 @@ class LobbyScene(override val window: GameWindow) : AScene() {
 
     override fun onMouseMove(xpos: Double, ypos: Double) {
 
-        if (active_game == GameType.LOBBY) {
-            var azimuthRate: Float = 0.1f
-            var elevationRate: Float = 0.025f
+        val azimuthRate: Float = 0.1f
+        val elevationRate: Float = 0.025f
 
-            if (firstMouseMove) {
-                val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
-                val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
+        if (firstMouseMove) {
+            val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
+            val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
 
-                // Ändere die elevation und azimuth Winkel der OrbitCamera
-                orbitCamera.azimuth -= yawAngle
+            // Ändere die elevation und azimuth Winkel der OrbitCamera
+            orbitCamera.azimuth -= yawAngle
 
-                // Begrenze die elevation, um nicht unter -45 Grad zu gehen
-                val newElevation = orbitCamera.elevation - pitchAngle
+            // Begrenze die elevation, um nicht unter -45 Grad zu gehen
+            val newElevation = orbitCamera.elevation - pitchAngle
                 orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
 
                 // Speichere die Mausposition für den nächsten Aufruf
@@ -315,23 +292,6 @@ class LobbyScene(override val window: GameWindow) : AScene() {
                 oldMouseY = ypos
             }
         }
-
-        // Ursprünglicher MouseMove Code
-        /* if (!firstMouseMove) {
-            val yawAngle = (xpos - oldMouseX).toFloat() * 0.002f
-            val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
-            if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
-                mainChar.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                bike.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
-            }
-        } else firstMouseMove = false
-        oldMouseX = xpos
-        oldMouseY = ypos */
-    }
-
 
 
     override fun onMouseScroll(xoffset: Double, yoffset: Double) {

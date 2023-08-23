@@ -27,13 +27,11 @@ import org.lwjgl.opengl.GL11.*
  * Created by Fabian on 16.09.2017.
  */
 class RacingGameScene(override val window: GameWindow) : AScene() {
-    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
-    private val ground: Renderable
+
     private val bike: Renderable
 
 
-    private val groundMaterial: Material
     private val groundColor: Vector3f
 
     //Lights
@@ -133,29 +131,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     //scene setup
     init {
 
-        //load textures
-        val groundDiff = Texture2D("assets/textures/stone_floor/tiles.png", true)
-        groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundSpecular = Texture2D("assets/textures/stone_floor/tiles.png", true)
-        groundSpecular.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundEmit = Texture2D("assets/textures/stone_floor/tiles.png", true)
-        groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        groundMaterial = Material(groundDiff, groundEmit, groundSpecular, 60f, Vector2f(64.0f, 64.0f))
 
-        //load an object and create a mesh
-        val gres = loadOBJ("assets/models/ground.obj")
-        //Create the mesh
-        val stride = 8 * 4
-        val atr1 = VertexAttribute(3, GL_FLOAT, stride, 0)     //position attribute
-        val atr2 = VertexAttribute(2, GL_FLOAT, stride, 3 * 4) //texture coordinate attribute
-        val atr3 = VertexAttribute(3, GL_FLOAT, stride, 5 * 4) //normal attribute
-        val vertexAttributes = arrayOf(atr1, atr2, atr3)
-        //Create renderable
-        ground = Renderable()
-        for (m in gres.objects[0].meshes) {
-            val mesh = Mesh(m.vertexData, m.indexData, vertexAttributes, groundMaterial)
-            ground.meshes.add(mesh)
-        }
         bike = loadModel(
             "assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",
             Math.toRadians(-90.0f),
@@ -394,9 +370,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         }
         staticShader.setUniform("numSpotLights", spotLightList.size)
 
-        // render objects
-        staticShader.setUniform("shadingColor", groundColor)
-        ground.render(staticShader)
+
         staticShader.setUniform("shadingColor", changingColor)
         bike.render(staticShader)
         staticShader.setUniform("shadingColor", skyColor)

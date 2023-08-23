@@ -14,18 +14,18 @@ import org.joml.Vector3f
 import org.lwjgl.opengl.GL11
 
 abstract class AScene {
-    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
+    val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
     private val groundMaterial : Material
     private val ground : Renderable
     private val groundColor: Vector3f
     init {
 
-        val groundDiff = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        val groundDiff = Texture2D("assets/textures/stone_floor/Stone_Tiles_002_COLOR.jpg", true)
         groundDiff.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
-        val groundSpecular = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        val groundSpecular = Texture2D("assets/textures/stone_floor/Stone_Tiles_002_DISP.png", true)
         groundSpecular.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
-        val groundEmit = Texture2D("assets/textures/stone_floor/tiles.png", true)
+        val groundEmit = Texture2D("assets/textures/stone_floor/Stone_Tiles_002_OCC.jpg", true)
         groundEmit.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
         groundMaterial = Material(groundDiff, groundEmit, groundSpecular, 60f, Vector2f(64.0f, 64.0f))
         groundColor = Vector3f(0.8f)
