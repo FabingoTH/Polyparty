@@ -190,11 +190,11 @@ class Scene(private val window: GameWindow) {
         /** Overworld-Setup:
          ** Setup Garten
          */
-        garden = loadModel("assets/Garten/finGarden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+        garden = loadModel("assets/Garten/garden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
             ?: throw IllegalArgumentException("Could not load the garden")
         garden.scale(Vector3f(2.0f))
         garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
-        garden.preTranslate(Vector3f(0f, 0.4f, -1f))
+        garden.preTranslate(Vector3f(0f, -0.5f, -1f))
         objList.add(garden)
         objList.add(garden)
 
