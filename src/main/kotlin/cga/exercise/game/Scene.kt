@@ -477,42 +477,20 @@ class Scene(private val window: GameWindow) {
 
         // if object collides with left hand wall
         if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
-            mainChar.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
+            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
         }
 
         // if object collides with right hand wall
         if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
-            mainChar.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
+            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
         }
 
         // if object collides with middle wall
         if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
-            mainChar.preTranslate(bike.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
+            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
         }
 
-
-        /**
-         * Bewegung des Hauptobjektes
-         */
-
-        if (window.getKeyState(GLFW_KEY_W)) {
-            bike.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_S)) {
-            bike.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_A) and window.getKeyState(GLFW_KEY_W)) {
-            bike.rotate(0.0f, dt * rotateMul, 0.0f)
-        }
-
-        // kann jetzt auch im stand rotieren
-        if (window.getKeyState(GLFW_KEY_A)) {
-            bike.rotate(0.0f, dt * rotateMul, 0.0f)
-        }
-        if (window.getKeyState(GLFW_KEY_D)) {
-            bike.rotate(0.0f, -dt * rotateMul, 0.0f)
-        }
-
+        
     }
 
     fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
