@@ -166,7 +166,7 @@ class Scene(private val window: GameWindow) {
          *
          */
         colBox = loadModel(
-            "assets/CollisionHelp/col.obj",
+            "assets/project_models/CollisionHelp/col.obj",
             0f,
             0f,
             0f
@@ -190,8 +190,9 @@ class Scene(private val window: GameWindow) {
         /** Overworld-Setup:
          ** Setup Garten
          */
-        garden = loadModel("assets/Garten/garden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the garden")
+        garden =
+            loadModel("assets/project_models/Garten/garden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the garden")
         garden.scale(Vector3f(2.0f))
         garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
         garden.preTranslate(Vector3f(0f, -0.5f, -1f))
@@ -219,7 +220,7 @@ class Scene(private val window: GameWindow) {
          ** Setup Schaufel
          */
         shovel =
-            loadModel("assets/Schaufel/gardening_shovel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            loadModel("assets/project_models/Schaufel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
                 ?: throw IllegalArgumentException("Could not load the shovel")
         shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
         shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
@@ -229,7 +230,12 @@ class Scene(private val window: GameWindow) {
         /**
          ** Setup Schnecke
          */
-        snail = loadModel("assets/Schnecke/Mesh_Snail.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+        snail = loadModel(
+            "assets/project_models/Schnecke/Mesh_Snail.obj",
+            Math.toRadians(-90.0f),
+            Math.toRadians(90.0f),
+            0.0f
+        )
             ?: throw IllegalArgumentException("Could not load the snail")
         snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
         snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
@@ -239,7 +245,7 @@ class Scene(private val window: GameWindow) {
         /**
          ** Setup Hake
          */
-        rake = loadModel("assets/Hake/rake.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+        rake = loadModel("assets/project_models/Hake/rake.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
             ?: throw IllegalArgumentException("Could not load the rake")
         rake.scale(Vector3f(0.5f))
         rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
@@ -249,8 +255,9 @@ class Scene(private val window: GameWindow) {
         /**
          ** Setup Gartenschlauch
          */
-        hose = loadModel("assets/Schlauch/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-            ?: throw IllegalArgumentException("Could not load the hose")
+        hose =
+            loadModel("assets/project_models/Schlauch/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the hose")
         hose.translate(
             Vector3f(
                 0f,
@@ -296,7 +303,7 @@ class Scene(private val window: GameWindow) {
          */
 
         skybox = loadModel(
-            "assets/Skybox/anime_sky.obj",
+            "assets/project_models/Skybox/anime_sky.obj",
             Math.toRadians(-90.0f),
             Math.toRadians(90.0f),
             0.0f
