@@ -1,9 +1,10 @@
-package cga.exercise.game
+package cga.exercise.game.scene
 
 import cga.exercise.components.camera.Camera
 import cga.exercise.components.geometry.Renderable
 import cga.exercise.components.light.PointLight
-import cga.exercise.game.scene.AScene
+import cga.exercise.game.GameType
+import cga.exercise.game.Player
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
