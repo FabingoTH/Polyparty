@@ -1,9 +1,30 @@
 package cga.exercise.components.geometry
 
+import cga.exercise.components.collision.AABB
 import org.joml.Matrix4f
 import org.joml.Vector3f
 
-open class Transformable(private var modelMatrix: Matrix4f = Matrix4f(), var parent: Transformable? = null) {
+
+/**
+ * Bounding Box als Eigenschaft hinzugefügt, um Collision mit Objekt zu checken.
+ * Eigenschaft ist eine Liste, um komplexere Bounding Boxes für ein Objekt erschaffen zu können.
+ *
+ * Beispiel: Der Garten ist ein einzelnes Objekt. Wir wollen z.B. Kollision mit den Wänden/Bögen haben.
+ *          Hierfür brauchen wir drei schmale Bounding Boxes anstatt einen großen Würfel, um noch in
+ *          den Garten "rein" zu können.
+ *
+ * Die erste Bounding Box ist initiiert und per default auf 0 gesetzt, weil wir sie vielleicht nicht bei jedem Objekt brauchen/haben wollen.
+ * Außerdem können Objekte so erstmal in die Szene geladen werden, ohne direkt die Koordinaten für die Boxen parat haben zu müssen.
+ */
+open class Transformable(
+    private var modelMatrix: Matrix4f = Matrix4f(),
+    var parent: Transformable? = null,
+    val boundingBoxList: MutableList<AABB> = mutableListOf(
+        (AABB(
+            Vector3f(0f), Vector3f(0f)
+        ))
+    )
+) {
     /**
      * Returns copy of object model matrix
      * @return modelMatrix
