@@ -1,35 +1,20 @@
 package cga.exercise.game
 
-import cga.exercise.components.camera.Aspectratio.Companion.custom
 import cga.exercise.components.camera.Camera
-import cga.exercise.components.collision.*
-import cga.exercise.components.geometry.Material
-import cga.exercise.components.geometry.Mesh
 import cga.exercise.components.geometry.Renderable
-import cga.exercise.components.geometry.VertexAttribute
 import cga.exercise.components.light.PointLight
-import cga.exercise.components.light.SpotLight
-import cga.exercise.components.shader.ShaderProgram
-import cga.exercise.components.camera.OrbitCamera
-import cga.exercise.components.texture.Texture2D
 import cga.exercise.game.scene.AScene
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
-import cga.framework.OBJLoader.loadOBJ
 import org.joml.Math
 import org.joml.Matrix4f
-import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFW.GLFW_KEY_T
 import org.lwjgl.opengl.GL11.*
-import java.awt.Point
 
 data class JumpRopePlayer(val player: Player, var score: Int = 0, var isAlive: Boolean = true)
 
-/**
- * Created by Fabian on 16.09.2017.
- */
 class JumpRythmGameScene(override val window: GameWindow) : AScene() {
 
     private val pointLightList = mutableListOf<PointLight>()
@@ -78,14 +63,13 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
         level.translate(Vector3f(0f, 0.5f, 0f))
         level.scale(Vector3f(8f))
 
-        rope = loadModel("assets/project_models/Lineal/ruler.obj", Math.toRadians(-90f),Math.toRadians(90f),  0f)
+        rope = loadModel("assets/project_models/Lineal/ruler.obj", Math.toRadians(-90f), Math.toRadians(90f), 0f)
             ?: throw IllegalArgumentException("Could not load the ruler")
         rope.translate(Vector3f(1f, 0.1f, 3f))
         rope.rotate(0f, Math.toRadians(90f), Math.toRadians(90f))
         rope.scale(Vector3f(0.33f))
 
         ropeMatrix = rope.getWorldModelMatrix()
-
 
         objList.add(squirrel)
         objList.add(snail)
@@ -99,7 +83,7 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
         camera.rotate(Math.toRadians(-25f), Math.toRadians(45f), Math.toRadians(15f))
 
 
-        skyColor = Vector3f(0.25f, 0.25f,0.25f)
+        skyColor = Vector3f(0.25f, 0.25f, 0.25f)
 
         /**
          * Setup Skybox
@@ -113,12 +97,18 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
         ) ?: throw IllegalArgumentException("Could not load the sky")
         skybox.apply {
             scale(Vector3f(5.0f))
-            translate(Vector3f(0.0f,5.0f,0.0f))
+            translate(Vector3f(0.0f, 5.0f, 0.0f))
             rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
         }
 
         // point lights
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.96f, 0.21f, 0.09f), Vector3f(0f, 2f, 6f)))
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(0.96f, 0.21f, 0.09f),
+                Vector3f(0f, 2f, 6f)
+            )
+        )
 
         //initial opengl state
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
@@ -231,8 +221,6 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
 
     private fun resetRope() {
         rope.setWorldMatrix(ropeMatrix)
-        //rope.setRotation(0f, Math.toRadians(90f), Math.toRadians(90f))
-        //rope.scale(Vector3f(0.33f))
 
         ropeRotation = Math.toRadians(360f)
         ropeSpeed = 3.5f
