@@ -1,6 +1,7 @@
 package cga.exercise.game
 
 import cga.exercise.components.camera.Aspectratio.Companion.custom
+import cga.exercise.components.camera.OrbitCamera
 import cga.exercise.components.camera.TronCamera
 import cga.exercise.components.geometry.Material
 import cga.exercise.components.geometry.Mesh
@@ -10,6 +11,7 @@ import cga.exercise.components.light.PointLight
 import cga.exercise.components.light.SpotLight
 import cga.exercise.components.shader.ShaderProgram
 import cga.exercise.components.texture.Texture2D
+import cga.exercise.games.JumpRope
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
@@ -17,18 +19,18 @@ import cga.framework.OBJLoader.loadOBJ
 import org.joml.Math
 import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFW.GLFW_KEY_T
 import org.lwjgl.opengl.GL11.*
 
 /**
  * Created by Fabian on 16.09.2017.
  */
 class Scene(private val window: GameWindow) {
-    private val staticShader: ShaderProgram =
-        ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
+    private val staticShader: ShaderProgram = ShaderProgram("assets/shaders/tron_vert.glsl", "assets/shaders/tron_frag.glsl")
 
     private val ground: Renderable
     private val bike: Renderable
+
 
     private val groundMaterial: Material
     private val groundColor: Vector3f
@@ -40,22 +42,52 @@ class Scene(private val window: GameWindow) {
     private val bikeSpotLight: SpotLight
     private val spotLightList = mutableListOf<SpotLight>()
 
-    //camera
+    //
+    private val orbitCamera: OrbitCamera
     private val camera: TronCamera
     private var oldMouseX = 0.0
     private var oldMouseY = 0.0
     private var firstMouseMove = true
 
+    /** GAME LOGIK
+     *
+     * Variablen für die Game-Logik.
+     *
+     */
+
+    /**
+     * Bewegung kann hiermit eingeschränkt werden
+     */
+    private var active_game: GameType
+
     /** PROJECT MODELS
      *  Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets".
      *  -> Texture Maps von Meike in Blender hinzugefügt.
      *  Alles in Scene ladbar mit vorhandener loadModel()-Methode (vgl. Motorcycle aus Praktikum).
-     *  --------------------------------------------------------------------------------------------
-     *  --------------------------------------------------------------------------------------------
+     */
+
+    private val objList: MutableList<Renderable> = mutableListOf()
+
+
+    /**
      *  Garten als Overworld-Model:
      *  -> Modell "Cloister Garden" von Bruno Oliveira via PolyPizza.
      */
     private val garden: Renderable
+
+    /**
+     * SPIELFIGUREN: Werden evtl. dynamisch gesetzt. Um die Steuerung des aktuellen main- und second characters
+     * definieren zu können, werden hier entsprechende "
+     */
+    private val mainChar: Player
+    private val secChar: Player
+
+
+    /**
+     * Eichhörnchen als Spielfigur:
+     * -> Modell "Lowpoly Squirrel" von Tipatat Chennavasin via PolyPizza.
+     */
+    private val squirrel: Renderable
 
     /** Haufen aus Schaufel, Hake und Schnecke:
      * Symbolisiert das "Memory"/Sortier-Spiel. Anvisieren und drücken auf "E" soll
@@ -81,7 +113,8 @@ class Scene(private val window: GameWindow) {
     private val skybox: Renderable
     private val skyColor: Vector3f
 
-    private val ruler: Renderable
+    private val jumpRopeGame: JumpRope
+    private val players: Array<Player>
 
     //scene setup
     init {
@@ -136,7 +169,16 @@ class Scene(private val window: GameWindow) {
         garden.scale(Vector3f(2.0f))
         garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
         garden.preTranslate(Vector3f(0f, 0.4f, -1f))
+        objList.add(garden)
 
+        /**
+         * Setup Spielfigur Eichhörnchen
+         */
+        squirrel = loadModel(
+            "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
+        ) ?: throw IllegalArgumentException("Could not load the squirrel")
+        squirrel.scale(Vector3f(0.7f))
+        squirrel.translate(Vector3f(0f, 6f, 0f))
 
         /** kleinere Gegenstände:
          ** Setup Schaufel
@@ -147,6 +189,7 @@ class Scene(private val window: GameWindow) {
         shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
         shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
         shovel.scale(Vector3f(0.27f))
+        objList.add(shovel)
 
         /**
          ** Setup Schnecke
@@ -156,6 +199,7 @@ class Scene(private val window: GameWindow) {
         snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
         snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
         snail.scale(Vector3f(0.05f))
+        objList.add(snail)
 
         /**
          ** Setup Hake
@@ -165,7 +209,7 @@ class Scene(private val window: GameWindow) {
         rake.scale(Vector3f(0.5f))
         rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
         rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
-
+        objList.add(rake)
 
         /**
          ** Setup Gartenschlauch
@@ -185,7 +229,7 @@ class Scene(private val window: GameWindow) {
             Math.toRadians(-17.0f)
         ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
         hose.scale(Vector3f(0.1f))
-
+        objList.add(hose)
 
         shovel.parent = garden
         hose.parent = garden
@@ -198,12 +242,6 @@ class Scene(private val window: GameWindow) {
         // Sobald wir den alten Boden entfernen, kann diese Translation entfernt werden.
         garden.preTranslate(Vector3f(0f, 0.2f, 0f))
 
-        ruler = loadModel("assets/Lineal/ruler.obj", Math.toRadians(-90f), Math.toRadians(90f), 0f)
-            ?: throw IllegalArgumentException("Could not load the ruler")
-        ruler.preTranslate(Vector3f(0f, 0.15f, 15f))
-        ruler.rotate(0f, Math.toRadians(90f), Math.toRadians(90f))
-        ruler.scale(Vector3f(0.5f))
-
         //setup camera
         camera = TronCamera(
             custom(window.framebufferWidth, window.framebufferHeight),
@@ -211,9 +249,9 @@ class Scene(private val window: GameWindow) {
             0.1f,
             1000.0f
         )
-        camera.parent = bike
+
         camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
-        camera.translate(Vector3f(0.0f, 5.0f, 8.0f))
+        camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
         groundColor = Vector3f(0.0f, 1.0f, 0.0f)
         skyColor = Vector3f(1.0f, 1.0f, 1.0f)
@@ -229,7 +267,8 @@ class Scene(private val window: GameWindow) {
             0.0f
         ) ?: throw IllegalArgumentException("Could not load the sky")
         skybox.apply {
-            scale(Vector3f(0.5f))
+            scale(Vector3f(5.0f))
+            translate(Vector3f(0.0f, 5.0f, 0.0f))
             rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
         }
 
@@ -252,20 +291,8 @@ class Scene(private val window: GameWindow) {
         spotLightList.add(bikeSpotLight)
 
         // additional lights in the scene
-        pointLightList.add(
-            PointLight(
-                "pointLight[${pointLightList.size}]",
-                Vector3f(0.0f, 2.0f, 2.0f),
-                Vector3f(-10.0f, 2.0f, -10.0f)
-            )
-        )
-        pointLightList.add(
-            PointLight(
-                "pointLight[${pointLightList.size}]",
-                Vector3f(2.0f, 0.0f, 0.0f),
-                Vector3f(10.0f, 2.0f, 10.0f)
-            )
-        )
+        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
+        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
         spotLightList.add(
             SpotLight(
                 "spotLight[${spotLightList.size}]",
@@ -277,6 +304,9 @@ class Scene(private val window: GameWindow) {
         )
         spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
+        jumpRopeGame = JumpRope()
+        objList.addAll(jumpRopeGame.getObjects())
+
         //initial opengl state
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
         glEnable(GL_CULL_FACE); GLError.checkThrow()
@@ -284,13 +314,32 @@ class Scene(private val window: GameWindow) {
         glCullFace(GL_BACK); GLError.checkThrow()
         glEnable(GL_DEPTH_TEST); GLError.checkThrow()
         glDepthFunc(GL_LESS); GLError.checkThrow()
+
+        /**
+         * initial game state
+         */
+        active_game = GameType.NONE
+        mainChar = Player(1, squirrel)
+        camera.parent = mainChar.obj
+        orbitCamera = OrbitCamera(mainChar.obj)
+        secChar = Player(2, bike)
+        secChar.obj.translate(Vector3f(1f, 0f, 1f))
+        //secChar.obj.parent = squirrel
+
+        players = arrayOf(mainChar, secChar)
+
+        objList.add(mainChar.obj)
+        objList.add(secChar.obj)
+
+
     }
 
     fun render(dt: Float, t: Float) {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
         staticShader.use()
-        camera.bind(staticShader)
+        orbitCamera.bind(staticShader)
+        orbitCamera.updateCameraPosition()
 
         val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
         bikePointLight.lightColor = changingColor
@@ -313,109 +362,72 @@ class Scene(private val window: GameWindow) {
         staticShader.setUniform("shadingColor", skyColor)
         skybox.render(staticShader)
 
-        garden.render(staticShader)
-        shovel.render(staticShader)
-        hose.render(staticShader)
-        rake.render(staticShader)
-        snail.render(staticShader)
-        ruler.render(staticShader)
+        staticShader.setUniform("shadingColor", Vector3f(0.5f, 0.5f, 0.5f))
+
+        for (obj in objList) {
+            obj.render(staticShader)
+        }
     }
 
-    var jumpVelocity = 0f
-    var isJumping = false
-    var height = 0f
-    val gravityMul = 0.6f
-    val groundLevel = 0f
-
-    var isJumpRopeGameRunning = false
-    var ropeRotation = Math.toRadians(360f)
-    var jumperScore = 0
-    var ropeSpeed = 3.5f
 
     fun update(dt: Float, t: Float) {
-        val moveMul = 15.0f
-        val rotateMul = 0.5f * Math.PI.toFloat()
-        if (window.getKeyState(GLFW_KEY_W)) {
-            bike.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_S)) {
-            bike.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_A) and window.getKeyState(GLFW_KEY_W)) {
-            bike.rotate(0.0f, dt * rotateMul, 0.0f)
-        }
-        if (window.getKeyState(GLFW_KEY_D) and window.getKeyState(GLFW_KEY_W)) {
-            bike.rotate(0.0f, -dt * rotateMul, 0.0f)
-        }
-        if (window.getKeyState(GLFW_KEY_F)) {
-            bikeSpotLight.rotate(Math.PI.toFloat() * dt, 0.0f, 0.0f)
-        }
+        mainChar.update(dt, window, active_game)
+        secChar.update(dt, window, active_game)
+
         if (window.getKeyState(GLFW_KEY_T)) {
-            isJumpRopeGameRunning = true
-        }
-        if (window.getKeyState(GLFW_KEY_SPACE)) {
-            if (!isJumping) {
-                jumpVelocity = 15f
-                isJumping = true
-            }
+            jumpRopeGame.startGame()
         }
 
-        if (isJumpRopeGameRunning) {
-            ruler.rotateAroundPoint(dt * ropeSpeed, 0f, 0f, Vector3f(0f, 2.5f, 15f))
-            ropeRotation -= dt * ropeSpeed
-            if (Math.toDegrees(ropeRotation.toDouble()) <= 2) {
-                if (height <= 0.5f) {
-                    System.out.println("You Lost! Final Score: " + jumperScore)
-                    isJumpRopeGameRunning = false
-                    jumperScore = 0
-                    resetRuler()
-                } else {
-                    jumperScore++
-                }
-                ropeSpeed = Math.min(9.5f, 3.5f + (jumperScore * 0.2f))
-                ropeRotation = Math.toRadians(360f)
-            }
-        }
-        calculateJump(dt)
+        jumpRopeGame.update(dt, players)
+
     }
 
     fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
 
     fun onMouseMove(xpos: Double, ypos: Double) {
-        if (!firstMouseMove) {
+
+
+        if (active_game == GameType.NONE) {
+            var azimuthRate: Float = 0.1f
+            var elevationRate: Float = 0.025f
+
+            if (firstMouseMove) {
+                val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
+                val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
+
+                // Ändere die elevation und azimuth Winkel der OrbitCamera
+                orbitCamera.azimuth -= yawAngle
+
+                // Begrenze die elevation, um nicht unter -45 Grad zu gehen
+                val newElevation = orbitCamera.elevation - pitchAngle
+                orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
+
+                // Speichere die Mausposition für den nächsten Aufruf
+                oldMouseX = xpos
+                oldMouseY = ypos
+            }
+        }
+
+        // Ursprünglicher MouseMove Code
+        /* if (!firstMouseMove) {
             val yawAngle = (xpos - oldMouseX).toFloat() * 0.002f
             val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
             if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
                 bike.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
+            }
+            else{
                 camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
             }
         } else firstMouseMove = false
         oldMouseX = xpos
         oldMouseY = ypos
+        */
     }
+
 
     fun cleanup() {}
 
     fun onMouseScroll(xoffset: Double, yoffset: Double) {
         camera.fov -= Math.toRadians(yoffset.toFloat())
-    }
-
-    private fun calculateJump(deltaTime: Float) {
-        if (isJumping) {
-            val newHeight = height + deltaTime * jumpVelocity
-            bike.translate(Vector3f(0f, deltaTime * jumpVelocity, 0f))
-            jumpVelocity -= gravityMul
-            height = Math.max(0f, newHeight)
-            if (height == groundLevel) {
-                jumpVelocity = 0f
-                isJumping = false
-            }
-        }
-    }
-
-    private fun resetRuler() {
-        ruler.setRotation(0f, Math.toRadians(90f), Math.toRadians(90f))
-        ruler.scale(Vector3f(0.5f))
     }
 }

@@ -8,10 +8,10 @@ import org.joml.Matrix4f
  * Created by Fabian on 16.09.2017.
  */
 
-class TronCamera(var aspectratio: Aspectratio = Aspectratio.WIDESCREEN,
+open class TronCamera(var aspectratio: Aspectratio = Aspectratio.WIDESCREEN,
                  var fov: Float = Math.toRadians(90.0).toFloat(),
                  var near: Float = 0.1f,
-                 var far: Float = 200.0f) : Transformable() {
+                 var far: Float = 5000.0f) : Transformable() {
 
 
     //we do a view matrix update only when needed

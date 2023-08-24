@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.8.0'
@@ -35,16 +37,22 @@ switch (OperatingSystem.current()) {
 
 repositories {
     mavenCentral()
+    maven { url "https://jitpack.io" } // JitPack Repository
+
 }
 
 dependencies {
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
-
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-assimp"
     implementation "org.lwjgl:lwjgl-glfw"
     implementation "org.lwjgl:lwjgl-opengl"
     implementation "org.lwjgl:lwjgl-stb"
+
+    String jimguiVersion = 'v0.20.3'
+    implementation "org.ice1000.jimgui:core:$jimguiVersion" // basic functionality
+    implementation "org.ice1000.jimgui:kotlin-dsl:$jimguiVersion" // kotlin dsl wrapper
+
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
@@ -59,6 +67,10 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
 
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
+
+    tasks.withType(JavaExec).configureEach {
+        if (Os.isFamily(Os.FAMILY_MAC)) jvmArgs "-XstartOnFirstThread"
+    }
 }
 
 test {
