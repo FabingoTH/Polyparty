@@ -19,7 +19,7 @@ class Player(private val playerNumber: Int, val obj: Renderable) {
     private val controls = controlSchemeByPlayerNumber(playerNumber)
 
     private val movementMul = 15f
-    private val rotateMul = 0.5f * Math.PI.toFloat()
+    private val rotateMul = 1.5f * Math.PI.toFloat()
 
     // Jump Animation Variabeln
     private val jumpHeight = 0.05f
@@ -47,9 +47,10 @@ class Player(private val playerNumber: Int, val obj: Renderable) {
          */
 
         when (activeGame) {
-            GameType.NONE -> useDefaultControls(deltaTime, window)
+            GameType.LOBBY -> useDefaultControls(deltaTime, window)
             GameType.JUMP_ROPE -> useJumpRopeControls(deltaTime, window)
             GameType.MEMORIZE -> TODO()
+            GameType.RACING -> TODO()
         }
 
 
@@ -122,5 +123,11 @@ class Player(private val playerNumber: Int, val obj: Renderable) {
 
     fun getHeight(): Float {
         return currentHeight
+    }
+
+    fun resetJump() {
+        jumpVelocity = 0f
+        currentHeight = 0f
+        isJumping = false
     }
 }

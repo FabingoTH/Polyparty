@@ -216,8 +216,6 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         orbitCamera.bind(staticShader)
         orbitCamera.updateCameraPosition()
 
-
-
         // render objects
         staticShader.setUniform("shadingColor", skyColor)
         skybox.render(staticShader)
