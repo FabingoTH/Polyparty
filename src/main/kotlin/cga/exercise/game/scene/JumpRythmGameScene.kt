@@ -213,8 +213,11 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
         mainChar.isAlive = true
         secChar.isAlive = true
         resetRope()
-        System.out.println("Score Player 1: " + mainChar.score)
-        System.out.println("Score Player 2: " + secChar.score)
+        println("Score Player 1: " + mainChar.score)
+        println("Score Player 2: " + secChar.score)
+        println("--------------------------------")
+        println(getWinnerString())
+        rope.setWorldMatrix(ropeMatrix)
         mainChar.score = 0
         secChar.score = 0
     }
@@ -232,5 +235,10 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
 
     private fun getHighestScore(): Int {
         return Math.max(mainChar.score, secChar.score)
+    }
+
+    private fun getWinnerString(): String {
+        val winner = if (mainChar.score > secChar.score) 1 else 2
+        return "Player $winner has won the game! \nIf you want to play again press T"
     }
 }

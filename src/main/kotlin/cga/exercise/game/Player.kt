@@ -15,7 +15,7 @@ fun controlSchemeByPlayerNumber(playerNumber: Int): ControlSchema {
     }
 }
 
-class Player(private val playerNumber: Int, val obj: Renderable) {
+class Player(playerNumber: Int, val obj: Renderable) {
     private val controls = controlSchemeByPlayerNumber(playerNumber)
 
     private val movementMul = 15f
