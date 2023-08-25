@@ -1,6 +1,7 @@
 package cga.exercise.game
 
 import cga.exercise.game.scene.AScene
+import cga.exercise.game.scene.JumpRythmGameScene
 import cga.framework.GameWindow
 import org.lwjgl.glfw.GLFW
 
@@ -8,13 +9,14 @@ import org.lwjgl.glfw.GLFW
   Created by Fabian on 16.09.2017.
  */
 class Game(
-           width: Int,
-           height: Int,
-           fullscreen: Boolean = false,
-           vsync: Boolean = false,
-           title: String = "Testgame",
-           GLVersionMajor: Int = 3,
-           GLVersionMinor: Int = 3) : GameWindow(width, height, fullscreen, vsync, GLVersionMajor, GLVersionMinor, title, 4, 120.0f) {
+    width: Int,
+    height: Int,
+    fullscreen: Boolean = false,
+    vsync: Boolean = false,
+    title: String = "Testgame",
+    GLVersionMajor: Int = 3,
+    GLVersionMinor: Int = 3
+) : GameWindow(width, height, fullscreen, vsync, GLVersionMajor, GLVersionMinor, title, 4, 120.0f) {
 
 
     private lateinit var activeScene: GameType
@@ -44,13 +46,14 @@ class Game(
             GameType.RACING -> racingScene
         }
     }
+
     override fun changeScene(newScene: GameType) {
         activeScene = newScene
     }
 
     override fun shutdown() {}
 
-    override fun update(dt: Float, t: Float)  {
+    override fun update(dt: Float, t: Float) {
 
         activeScene().update(dt, t)
 

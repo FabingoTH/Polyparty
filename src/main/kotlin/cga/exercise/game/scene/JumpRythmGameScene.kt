@@ -2,7 +2,10 @@ package cga.exercise.game.scene
 
 import cga.exercise.components.camera.Camera
 import cga.exercise.components.geometry.Renderable
+import cga.exercise.components.gui.GuiElement
 import cga.exercise.components.light.PointLight
+import cga.exercise.components.shader.GuiShader
+import cga.exercise.components.texture.Texture2D
 import cga.exercise.game.GameType
 import cga.exercise.game.Player
 import cga.framework.GLError
@@ -10,6 +13,7 @@ import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
 import org.joml.Math
 import org.joml.Matrix4f
+import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW.GLFW_KEY_T
 import org.lwjgl.opengl.GL11.*
@@ -17,6 +21,7 @@ import org.lwjgl.opengl.GL11.*
 data class JumpRopePlayer(val player: Player, var score: Int = 0, var isAlive: Boolean = true)
 
 class JumpRythmGameScene(override val window: GameWindow) : AScene() {
+    private val guiShader = GuiShader()
 
     private val pointLightList = mutableListOf<PointLight>()
 
@@ -24,6 +29,7 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
     private val camera: Camera
 
     private val objList: MutableList<Renderable> = mutableListOf()
+    private val guiList: MutableList<GuiElement> = mutableListOf()
 
     private val mainChar: JumpRopePlayer
     private val secChar: JumpRopePlayer
@@ -111,6 +117,15 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
             )
         )
 
+        val squirrelPic = Texture2D("assets/textures/pictures/squirrel.png", true)
+        val squirrelElement = GuiElement(squirrelPic, Vector2f(-0.9f, 0.9f), Vector2f(0.1f))
+
+        val snailPic = Texture2D("assets/textures/pictures/snail.png", true)
+        val snailElement = GuiElement(snailPic, Vector2f(-0.9f, 0.6f), Vector2f(0.1f))
+
+        guiList.add(squirrelElement)
+        guiList.add(snailElement)
+
         //initial opengl state
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
         glEnable(GL_CULL_FACE); GLError.checkThrow()
@@ -144,6 +159,8 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
         for (obj in objList) {
             obj.render(staticShader)
         }
+
+        guiShader.render(guiList)
     }
 
     override fun update(dt: Float, t: Float) {
