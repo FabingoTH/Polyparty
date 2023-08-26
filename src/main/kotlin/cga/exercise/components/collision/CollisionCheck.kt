@@ -7,7 +7,7 @@ enum class OverlappedAxis(val difference: Vector3f) {
     MIN_X(Vector3f(-0.1f, 0f, 0f)),
     MAX_X(Vector3f(0.1f, 0f, 0f)),
     MIN_Z(Vector3f(0f, 0f, -0.1f)),
-    MAX_Z(Vector3f(0f, 0f, -0.1f))
+    MAX_Z(Vector3f(0f, 0f, 0.1f))
 }
 
 /**
@@ -48,7 +48,6 @@ class AABB(val min: Vector3f, val max: Vector3f) {
                 OverlappedAxis.MAX_Z
             }
         } else null
-
     }
 }
 

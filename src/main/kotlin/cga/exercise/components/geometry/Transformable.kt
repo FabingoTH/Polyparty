@@ -187,6 +187,14 @@ open class Transformable(
         modelMatrix = translationMatrix.mul(Matrix4f(getModelMatrix()))
     }
 
+    fun setWorldPosition(newPosition: Vector3f) {
+        // Berechne Verschiebung vom Weltursprung zur neuen Position
+        val worldTranslation = Matrix4f().translate(newPosition)
+
+        // Setze das Objekt an gewünschte Weltposition
+        modelMatrix = worldTranslation
+    }
+
     fun setWorldMatrix(matrix: Matrix4f) {
         modelMatrix = Matrix4f(matrix)
         parent?.let {

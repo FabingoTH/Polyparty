@@ -25,7 +25,6 @@ class Game(
     private var jumpRopeScene: JumpRythmGameScene
     private var memoryScene: MemorizeGameScene
     private var racingScene: RacingGameScene
-    //private var actualScene: AScene
 
     init {
         setCursorVisible(false)

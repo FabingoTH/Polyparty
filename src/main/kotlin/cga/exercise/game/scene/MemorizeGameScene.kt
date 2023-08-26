@@ -4,6 +4,7 @@ import cga.exercise.components.camera.Aspectratio
 import cga.exercise.components.camera.Camera
 import cga.exercise.components.camera.OrbitCamera
 import cga.exercise.components.geometry.Renderable
+import cga.exercise.components.geometry.Transformable
 import cga.exercise.game.GameType
 import cga.framework.GLError
 import cga.framework.GameWindow
@@ -29,8 +30,11 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
     private val originalLily: Renderable
 
 
+    private val win1setup: Renderable
+    private val win2setup: Renderable
+
     private val objList = mutableListOf<Renderable>()
-    private val camera: Camera
+    private var camera: Camera
     private val devCamera: OrbitCamera
 
     private var memoStage: MemoStage
@@ -47,6 +51,7 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         playerPOV = loadModel("assets/project_models/Eichhoernchen/squirrel.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the player")
         objList.add(playerPOV)
+        playerPOV.translate(Vector3f(-8f, 0f, 5f))
 
         /**
          * object scenes for guessing
@@ -55,33 +60,56 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         flowerSetup = loadModel("assets/project_models/MemorizeGameScene/FLOWERSCENE.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the flower scene")
         objList.add(flowerSetup)
+        flowerSetup.translate(Vector3f(-15f, 0f, 0f))
 
         originalFlower = loadModel("assets/project_models/MemorizeGameScene/Blumen/orig/flower.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the flower")
-        objList.add(this.originalFlower)
-        originalFlower.preTranslate(Vector3f(-2.08f, 0.78f, 0f))
+        objList.add(originalFlower)
+        originalFlower.preTranslate(Vector3f(-17.08f, 0.78f, 0f))
         originalFlower.scale(Vector3f(0.18f))
 
 
         rakeSetup = loadModel("assets/project_models/MemorizeGameScene/RAKESCENE.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the rake scene")
         objList.add(rakeSetup)
-        rakeSetup.translate(Vector3f(3f, 0f, 0f))
+        rakeSetup.translate(Vector3f(-5f, 0f, 0f))
 
         originalRake = loadModel("assets/project_models/MemorizeGameScene/Hake/orig/rake.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the rake")
-        objList.add(this.originalRake)
+        objList.add(originalRake)
+        originalRake.rotate(0f, Math.toRadians(-92.0f), 0f)
+        originalRake.scale(Vector3f(0.05f))
+        originalRake.preTranslate(Vector3f(-7.35f, 0.85f, -0.053f))
 
 
         lilySetup = loadModel("assets/project_models/MemorizeGameScene/LILYSCENE.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the lily scene")
-        objList.add(this.lilySetup)
-        lilySetup.translate(Vector3f(6f, 0f, 0f))
-
+        objList.add(lilySetup)
+        lilySetup.translate(Vector3f(5f, 0f, 0f))
 
         originalLily = loadModel("assets/project_models/MemorizeGameScene/Wasserlilie/orig/lily.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the lily")
-        objList.add(this.originalLily)
+        objList.add(originalLily)
+        originalLily.scale(Vector3f(0.3f))
+        originalLily.preTranslate(Vector3f(2.85f, 0.85f, -0.053f))
+        originalLily.rotate(Math.toRadians(-20f), Math.toRadians(-92f), 0f)
+
+
+        /**
+         * setup win screens
+         */
+
+        win1setup = loadModel("assets/project_models/MemorizeGameScene/WIN1SCENE.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the win screen")
+        objList.add(win1setup)
+        win1setup.preTranslate(Vector3f(15f, 0f, 0f))
+
+
+        win2setup = loadModel("assets/project_models/MemorizeGameScene/WIN2SCENE.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the win screen")
+        objList.add(win2setup)
+        win2setup.preTranslate(Vector3f(25f, 0f, 0f))
+
 
         /**
          * setup static camera
@@ -95,10 +123,12 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         )
 
         // game cam settings
-        camera.lookAt(Vector3f(1f, 0f, 0f))
+        camera.lookAt(Vector3f(1f, 0f, 0f)) // anders
         camera.fov = 0.12f
-        camera.translate(Vector3f(-0.05f, 0.7f, 8f))
-
+        //camera.translate(Vector3f(-0.05f, 0.7f, 8f))
+        //camera.preTranslate(Vector3f(-24f, 0.7f, -0.05f))
+        camera.setPosition(Vector3f(-24f, 0.7f, -0.05f))
+        //camera.lookAt(Vector3f(0f, 0.7f, 1f)) // +x vorwärts, +y geht hoch, +z nach rechts
         /**
          * setup developer Camera (for easier object placement)
          */
@@ -122,6 +152,8 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
         devCamera.bind(staticShader)
         devCamera.updateCameraPosition()
+        camera.bind(staticShader)
+
 
         for (obj in objList) {
             obj.render(staticShader)
@@ -148,92 +180,85 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
         // STAGE 1
         // initial position: flower
-        // minuspunkt bei falscher Antwort (um spammen zu punishen)
-        // pluspunkt bei eichtiger antwort + teleportation zum nächsten spiel
+        // pluspunkt bei richtiger antwort + teleportation zum nächsten spiel
+        // println()s zum Debuggen
+        // die else ifs verhindern ein punkte increasen/kamera verschieben wenn taste länger als
+        // 1 framelänge gedrückt wird (was sehr wahrscheinlich ist)
+        //
         if (memoStage == MemoStage.FLOWER) {
-            if (window.getKeyState(GLFW.GLFW_KEY_W) || window.getKeyState(GLFW.GLFW_KEY_S) || window.getKeyState(GLFW.GLFW_KEY_A)) {
-                pointsP1--
-            }
-            if (window.getKeyState(GLFW.GLFW_KEY_U) || window.getKeyState(GLFW.GLFW_KEY_J) || window.getKeyState(GLFW.GLFW_KEY_K)) {
-                pointsP2--
-            }
+
             if (window.getKeyState(GLFW.GLFW_KEY_Q)) {
-                pointsP1++
-                camera.preTranslate(Vector3f(3f, 0f, 0f))
+                pointsP1 = 1
+                println("$pointsP1 und $pointsP2")
+                camera.setPosition(Vector3f(10f, 0f, 0f))
                 memoStage = MemoStage.RAKE
             }
             if (window.getKeyState(GLFW.GLFW_KEY_I)) {
-                pointsP2++
-                camera.preTranslate(Vector3f(3f, 0f, 0f))
+                pointsP2 = 1
+                camera.setPosition(Vector3f(10f, 0f, 0f))
                 memoStage = MemoStage.RAKE
             }
         }
 
         //STAGE 2
         if (memoStage == MemoStage.RAKE) {
-            if (window.getKeyState(GLFW.GLFW_KEY_Q) || window.getKeyState(GLFW.GLFW_KEY_W) || window.getKeyState(GLFW.GLFW_KEY_S)) {
-                pointsP1--
-            }
-            if (window.getKeyState(GLFW.GLFW_KEY_I) || window.getKeyState(GLFW.GLFW_KEY_J) || window.getKeyState(GLFW.GLFW_KEY_K)) {
-                pointsP2--
-            }
+
             if (window.getKeyState(GLFW.GLFW_KEY_A)) {
-                pointsP1++
-                camera.preTranslate(Vector3f(3f, 0f, 0f))
+                pointsP1 = if (pointsP1 == 0) 1 else 2
+                println("$pointsP1 und $pointsP2")
+                camera.setPosition(Vector3f(10f, 0f, 0f))
                 memoStage = MemoStage.LILY
             }
             if (window.getKeyState(GLFW.GLFW_KEY_U)) {
-                pointsP2++
-                camera.preTranslate(Vector3f(3f, 0f, 0f))
+                pointsP2 = if (pointsP2 == 0) 1 else 2
+                camera.setPosition(Vector3f(10f, 0f, 0f))
                 memoStage = MemoStage.LILY
             }
         }
 
         // STAGE 3
         if (memoStage == MemoStage.LILY) {
-            if (window.getKeyState(GLFW.GLFW_KEY_Q) || window.getKeyState(GLFW.GLFW_KEY_W) || window.getKeyState(GLFW.GLFW_KEY_A)) {
-                pointsP1--
-            }
-            if (window.getKeyState(GLFW.GLFW_KEY_U) || window.getKeyState(GLFW.GLFW_KEY_I) || window.getKeyState(GLFW.GLFW_KEY_K)) {
-                pointsP2--
-            }
+
             if (window.getKeyState(GLFW.GLFW_KEY_S)) {
-                pointsP1++
-                camera.preTranslate(Vector3f(3f, 0f, 0f))
-                memoStage = MemoStage.WIN
+                pointsP1 = if (pointsP1 == 0) 1 else if (pointsP1 == 1) 2 else 3
+                println("$pointsP1 und $pointsP2")
+                if (pointsP1 > pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+
+                } else if (pointsP1 < pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+
+                }
+                memoStage = MemoStage.DONE
             }
             if (window.getKeyState(GLFW.GLFW_KEY_J)) {
-                pointsP2++
-                camera.preTranslate(Vector3f(3f, 0f, 0f))
-                memoStage = MemoStage.WIN
+                pointsP2 = if (pointsP2 == 0) 1 else if (pointsP2 == 1) 2 else 3
+                if (pointsP1 > pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+
+                } else if (pointsP1 < pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+                }
+                memoStage = MemoStage.DONE
             }
+
         }
 
-        if (memoStage == MemoStage.WIN) {
-
-            if (pointsP1 > pointsP2) // translate to win screen player 1
-            else 0 // translate to winscreen player 2
-
-
-            //  can go back to lobby with space as instructed
-        }
+        // Memo stage done:
+        // do nothing. stand still. let players end game with SPACE as instructed
 
 
         // dev cam steuerung
 
         if (window.getKeyState(GLFW.GLFW_KEY_W)) {
             playerPOV.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-
-
+        }
+        if (window.getKeyState(GLFW.GLFW_KEY_A)) {
+            playerPOV.rotate(0.0f, dt * rotateMul, 0.0f)
         }
         if (window.getKeyState(GLFW.GLFW_KEY_S)) {
             playerPOV.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
         }
-
-        if (window.getKeyState(GLFW.GLFW_KEY_A)) {
-            playerPOV.rotate(0.0f, dt * rotateMul, 0.0f)
-        }
-
         if (window.getKeyState(GLFW.GLFW_KEY_D)) {
             playerPOV.rotate(0.0f, -dt * rotateMul, 0.0f)
         }
