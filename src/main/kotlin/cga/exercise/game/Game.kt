@@ -1,6 +1,7 @@
 package cga.exercise.game
 
 import cga.exercise.game.scene.AScene
+import cga.exercise.game.scene.MemorizeGameScene
 import cga.framework.GameWindow
 import org.lwjgl.glfw.GLFW
 
@@ -26,14 +27,12 @@ class Game(
 
     init {
         setCursorVisible(false)
-        activeScene = GameType.MEMORIZE
+        activeScene = GameType.LOBBY // initial game type
 
         mainMenuScene = LobbyScene(this)
         jumpRopeScene = JumpRythmGameScene(this)
         memoryScene = MemorizeGameScene(this)
         racingScene = RacingGameScene(this)
-
-        //actualScene = memoryScene
     }
 
     private fun activeScene(): AScene {

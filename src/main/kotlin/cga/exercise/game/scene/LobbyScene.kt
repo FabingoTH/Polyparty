@@ -217,8 +217,9 @@ class LobbyScene(override val window: GameWindow) : AScene() {
     override fun render(dt: Float, t: Float) {
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
         staticShader.use()
+
         staticShader.setUniform("shadingColor", groundColor)
-        ground.render(staticShader)
+        //ground.render(staticShader)
 
         orbitCamera.bind(staticShader)
         orbitCamera.updateCameraPosition()
