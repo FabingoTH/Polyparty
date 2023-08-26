@@ -1,5 +1,6 @@
 package cga.framework
 
+import cga.exercise.game.Game
 import cga.exercise.game.GameType
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.*
@@ -236,7 +237,7 @@ abstract class GameWindow(
     /**
      * Is called when a mouse move event occurs
      * @param xpos  screen coordinate x value
-     * @param ypos  screen coordinate y value
+     * @param ypos  screen coordinate y valueb
      */
     protected open fun onMouseMove(xpos: Double, ypos: Double) {}
 
@@ -264,7 +265,8 @@ abstract class GameWindow(
      */
     protected open fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
 
-    protected open fun changeScene(newGame: GameType) {}
+    open fun changeScene(newGame: GameType) {}
+
     /**
      * Is called when the default frame buffer size changes (i.e. through resizing the window)
      * @param width     new frame buffer width
