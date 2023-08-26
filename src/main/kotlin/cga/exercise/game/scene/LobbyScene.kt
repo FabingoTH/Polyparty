@@ -125,7 +125,6 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
         hose.scale(Vector3f(0.1f))
         objList.add(hose)
-
         shovel.parent = garden
         hose.parent = garden
         /**
@@ -291,7 +290,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
                 oldMouseX = xpos
                 oldMouseY = ypos
             }
-        }
+    }
 
 
     override fun onMouseScroll(xoffset: Double, yoffset: Double) {

@@ -237,7 +237,7 @@ abstract class GameWindow(
     /**
      * Is called when a mouse move event occurs
      * @param xpos  screen coordinate x value
-     * @param ypos  screen coordinate y value
+     * @param ypos  screen coordinate y valueb
      */
     protected open fun onMouseMove(xpos: Double, ypos: Double) {}
 
