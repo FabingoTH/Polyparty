@@ -9,7 +9,7 @@ data class ControlSchema(val forward: Int, val left: Int, val right: Int, val ba
 
 fun controlSchemeByPlayerNumber(playerNumber: Int): ControlSchema {
     return when (playerNumber) {
-        1 -> ControlSchema(GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_SPACE)
+        1 -> ControlSchema(GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_LEFT_SHIFT)
         2 -> ControlSchema(GLFW_KEY_I, GLFW_KEY_J, GLFW_KEY_L, GLFW_KEY_K, GLFW_KEY_RIGHT_SHIFT)
         else -> throw Error("Invalid Player Number - Only 1 or 2 is allowed")
     }

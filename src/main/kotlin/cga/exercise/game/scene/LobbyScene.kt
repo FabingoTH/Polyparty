@@ -2,23 +2,19 @@ package cga.exercise.game
 
 import cga.exercise.components.camera.Aspectratio.Companion.custom
 import cga.exercise.components.camera.Camera
-import cga.exercise.components.collision.*
+import cga.exercise.components.camera.OrbitCamera
+import cga.exercise.components.collision.AABB
 import cga.exercise.components.geometry.Material
 import cga.exercise.components.geometry.Mesh
 import cga.exercise.components.geometry.Renderable
 import cga.exercise.components.geometry.VertexAttribute
 import cga.exercise.components.light.PointLight
-import cga.exercise.components.light.SpotLight
-import cga.exercise.components.shader.ShaderProgram
-import cga.exercise.components.camera.OrbitCamera
 import cga.exercise.components.texture.Texture2D
 import cga.exercise.game.scene.AScene
-import cga.exercise.main
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
 import cga.framework.OBJLoader
-import cga.framework.OBJLoader.loadOBJ
 import org.joml.Math
 import org.joml.Vector2f
 import org.joml.Vector3f
@@ -217,9 +213,38 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         ) ?: throw IllegalArgumentException("Could not load the sky")
         skybox.apply {
             scale(Vector3f(5.0f))
-            translate(Vector3f(0.0f,5.0f,0.0f))
+            translate(Vector3f(0.0f, 5.0f, 0.0f))
             rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
         }
+
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(92f / 255f, 143f / 255f, 224f / 255f),
+                Vector3f(0.15f, 1.7f, -1.5f),
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(0.96f, 0.21f, 0.09f),
+                Vector3f(-3.9f, 1.5f, 2f)
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(0.96f, 0.21f, 0.09f),
+                Vector3f(-1.6f, 1.5f, -4.9f)
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(0.96f, 0.21f, 0.09f),
+                Vector3f(4f, 1.5f, 2f)
+            )
+        )
 
 
         //initial opengl state
@@ -251,11 +276,19 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         orbitCamera.bind(staticShader)
         orbitCamera.updateCameraPosition()
 
+        // bind lights
+        for (pointLight in pointLightList) {
+            pointLight.bind(staticShader)
+        }
+        staticShader.setUniform("numPointLights", pointLightList.size)
+
         // render objects
         staticShader.setUniform("shadingColor", skyColor)
         skybox.render(staticShader)
 
-        //staticShader.setUniform("shadingColor", Vector3f(0.5f, 0.5f, 0.5f))
+        staticShader.setUniform("shadingColor", Vector3f(0.6f, 0.6f, 0.6f))
+
+
 
         for (obj in objList) {
             obj.render(staticShader)
