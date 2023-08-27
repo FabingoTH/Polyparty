@@ -16,10 +16,9 @@ class TextMeshCreator(metaFile: File) {
         metaData = MetaFile(metaFile)
     }
 
-    fun createTextMesh(text: GuiText) {
+    fun createTextMesh(text: GuiText): TextMeshData {
         val lines = createStructure(text)
-        val data = createQuadVertices(text, lines)
-        return data
+        return createQuadVertices(text, lines)
     }
 
     private fun createStructure(text: GuiText): ArrayList<Line> {
@@ -60,7 +59,7 @@ class TextMeshCreator(metaFile: File) {
         lines.add(currLine)
     }
 
-    private fun createQuadVertices(text: GuiText, lines: ArrayList<Line>) {
+    private fun createQuadVertices(text: GuiText, lines: ArrayList<Line>): TextMeshData {
         text.setNumberOfLines(lines.size)
         var cursorX = 0f
         var cursorY = 0f
@@ -88,7 +87,7 @@ class TextMeshCreator(metaFile: File) {
             cursorX = 0f
             cursorY += LINE_HEIGHT * text.getFontSize()
         }
-        return TextMeshData(vertices.toArray(), textureCoords.toArray())
+        return TextMeshData(vertices.toFloatArray(), textureCoords.toFloatArray())
     }
 
     private fun addVerticesForCharacter(
