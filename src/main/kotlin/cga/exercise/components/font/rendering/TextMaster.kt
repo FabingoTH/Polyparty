@@ -7,10 +7,10 @@ import org.lwjgl.opengl.GL30
 
 object TextMaster {
     private val texts: MutableMap<FontType, MutableList<GUIText>> = HashMap()
-    // private var renderer: FontRenderer = FontRenderer()
+    private var renderer: FontRenderer = FontRenderer()
 
     fun render() {
-        //renderer.render(texts)
+        renderer.render(texts)
     }
 
     fun loadText(text: GUIText) {
