@@ -70,6 +70,13 @@ open class Transformable(
     }
 
     /**
+     * Resets objects rotation back to normal.
+     */
+    fun setRotation(angleX: Float, angleY: Float, angleZ: Float) {
+        modelMatrix.setRotationXYZ(angleX, angleY, angleZ)
+    }
+
+    /**
      * Translates object based on its own coordinate system.
      * @param deltaPos delta positions
      */

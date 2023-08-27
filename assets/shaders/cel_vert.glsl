@@ -11,6 +11,7 @@ layout(location = 2) in vec3 normal;
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 proj_matrix;
+uniform mat4 lightspace_matrix;
 
 uniform vec2 tcMultiplier;
 
@@ -41,6 +42,7 @@ out struct VertexData
     vec3 toCamera;
     vec3 toPointLight[MAX_POINT_LIGHTS];
     vec3 toSpotLight[MAX_SPOT_LIGHTS];
+    vec4 fragPosLight;
 } vertexData;
 
 void main(){
@@ -59,6 +61,7 @@ void main(){
         vertexData.toSpotLight[i] = (view_matrix * vec4(spotLight[i].Position, 1.0)).xyz - viewpos.xyz;
     }
     gl_Position = proj_matrix * viewpos;
+    vertexData.fragPosLight = lightspace_matrix * model_matrix * vec4(position, 1.0f);
     // Calculate surface normal and texture coordinate
     vertexData.normal = (inverse(transpose(modelview)) * vec4(normal, 0.0f)).xyz;
     vertexData.textureCoordinate = textureCoordinate * tcMultiplier;
