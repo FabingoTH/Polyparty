@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
 /**
  * Created by Fabian on 16.09.2017.
  */
-class Texture2D(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Boolean): ITexture{
+class Texture2D(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Boolean) : ITexture {
     private var texID: Int = -1
         private set
 
@@ -22,6 +22,7 @@ class Texture2D(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Bool
             ex.printStackTrace()
         }
     }
+
     companion object {
         //create texture from file
         //don't support compressed textures for now
@@ -33,7 +34,7 @@ class Texture2D(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Bool
             //flip y coordinate to make OpenGL happy
             STBImage.stbi_set_flip_vertically_on_load(true)
             val imageData = STBImage.stbi_load(path, x, y, readChannels, 4)
-                    ?: throw Exception("Image file \"" + path + "\" couldn't be read:\n" + STBImage.stbi_failure_reason())
+                ?: throw Exception("Image file \"" + path + "\" couldn't be read:\n" + STBImage.stbi_failure_reason())
 
             try {
                 return Texture2D(imageData, x.get(), y.get(), genMipMaps)
@@ -90,6 +91,10 @@ class Texture2D(imageData: ByteBuffer, width: Int, height: Int, genMipMaps: Bool
             glActiveTexture(GL_TEXTURE0 + textureUnit)
             glBindTexture(GL_TEXTURE_2D, texID)
         }
+    }
+
+    fun getTexId(): Int {
+        return texID
     }
 
     override fun unbind() {
