@@ -13,6 +13,7 @@ import cga.exercise.components.shader.ShaderProgram
 import cga.exercise.components.camera.OrbitCamera
 import cga.exercise.components.texture.Texture2D
 import cga.exercise.game.scene.AScene
+import cga.exercise.main
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
@@ -43,6 +44,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
     private var firstMouseMove = true
 
     private val objList: MutableList<Renderable> = mutableListOf()
+    private val pointLightList = mutableListOf<PointLight>()
 
     // GROUND
     private val groundMaterial: Material
@@ -134,13 +136,16 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         signMemo.scale(Vector3f(0.5f))
 
         // bounding box links
-        garden.boundingBoxList[0] = AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(-4.6f, 0f, 3f))
+        garden.boundingBoxList[0] = AABB(min = Vector3f(-4.3f, 0f, -6f), max = Vector3f(-4.4f, 0f, 3f))
 
         // bounding box rechts
-        garden.boundingBoxList.add(AABB(min = Vector3f(4.9f, 0f, -6f), max = Vector3f(5.1f, 0f, 3f)))
+        garden.boundingBoxList.add(AABB(min = Vector3f(5.9f, 0f, -6f), max = Vector3f(6.1f, 0f, 3f)))
 
         // bounding box hinten
-        garden.boundingBoxList.add(AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(5.1f, 0f, -6f)))
+        garden.boundingBoxList.add(AABB(min = Vector3f(-6f, 0f, -6f), max = Vector3f(6f, 0f, -5.8f)))
+
+        // bounding box vorne
+        garden.boundingBoxList.add(AABB(min = Vector3f(-5f, 0f, 4.3f), max = Vector3f(5f, 0f, 4.5f)))
 
         squirrel = loadModel(
             "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
@@ -179,6 +184,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
 
         rake.parent = garden
         shovel.parent = garden
+
 
         /**
          * Wenn der Garten nachträglich transformiert wird,
@@ -292,6 +298,31 @@ class LobbyScene(override val window: GameWindow) : AScene() {
 
         if (window.getKeyState(GLFW_KEY_D)) {
             mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
+        }
+
+
+        // Kollisionsdetektion
+        mainChar.boundingBoxList[0] =
+            AABB(mainChar.getWorldPosition().add(Vector3f(-1f)), mainChar.getWorldPosition().add(Vector3f(1f)))
+
+        // if object collides with left hand wall
+        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
+            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
+        }
+
+        // if object collides with right hand wall
+        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
+            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
+        }
+
+        // if object collides with middle wall
+        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
+            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
+        }
+
+        // if object collides with middle wall
+        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[3])) {
+            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
         }
     }
 
