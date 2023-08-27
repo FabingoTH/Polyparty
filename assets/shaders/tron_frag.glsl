@@ -13,7 +13,7 @@ in struct VertexData
 {
     vec2 textureCoordinate;
     vec3 normal;
-    // Vectors needed for lighting calculations. Must not be normalized in the vertex shader.
+// Vectors needed for lighting calculations. Must not be normalized in the vertex shader.
     vec3 toCamera;
     vec3 toPointLight[MAX_POINT_LIGHTS];
     vec3 toSpotLight[MAX_SPOT_LIGHTS];
@@ -42,6 +42,7 @@ struct SpotLight
     vec2 Cone;
     vec3 Direction;
 };
+
 // Fixed-size uniform arrays, but with a runtime-configurable number of lights
 uniform PointLight pointLight[MAX_POINT_LIGHTS];
 uniform int numPointLights;
@@ -105,7 +106,7 @@ vec3 shadeBlinn(vec3 N, vec3 L, vec3 V, vec3 diffc, vec3 specc, float shn)
     float HdotN = max(dot(H, N), 0.0f);
     // Add up diffuse and specular terms: Lambert Diffuse + Blinn-Phong Specular.
     // The higher the shininess, the narrower the microfacet distribution becomes around the surface normal.
-    return  diffc * NdotL + specc * pow(HdotN, shn);
+    return diffc * NdotL + specc * pow(HdotN, shn);
 }
 
 // --- converts from linear-RGB to gamma-RGB
@@ -132,7 +133,7 @@ void main(){
 
     // Initialize the color accumulator with light due to self-emission.
     vec3 emit_term = emitColor * shadingColor;
-    vec3 final_color = emit_term;  // this var collects the shading from all light sources
+    vec3 final_color = emit_term;// this var collects the shading from all light sources
 
     // Due to the linearity of light, we simply add up the contributions from all light sources in the
     // final_color variable.
@@ -143,7 +144,7 @@ void main(){
         vec3 Lpl = normalize(vertexData.toPointLight[i]);
         // Evaluate the BRDF at the current shading point for point light i
         //vec3 pshade = shade(N, Lpl, V, diffColor, specColor, materialShininess);  // Phong shading
-        vec3 pshade = shadeBlinn(N, Lpl, V, diffColor, specColor, materialShininess*2);  // Blinn-Phong shading
+        vec3 pshade = shadeBlinn(N, Lpl, V, diffColor, specColor, materialShininess*2);// Blinn-Phong shading
         // Get the incoming light intensity including inverse-square-law attenuation
         vec3 intPointLight = getPointLightIntensity(pointLight[i].Color, vertexData.toPointLight[i]);
         // Multiply BRDF with incoming light intensity to get total color contribution for point light i
@@ -156,7 +157,7 @@ void main(){
         vec3 Lsl = normalize(vertexData.toSpotLight[i]);
         // Evaluate the BRDF at the current shading point for spot light i
         //vec3 sshade = shade(N, Lsl, V, diffColor, specColor, materialShininess);  // Phong shading
-        vec3 sshade = shadeBlinn(N, Lsl, V, diffColor, specColor, materialShininess*2);  // Blinn-Phong shading
+        vec3 sshade = shadeBlinn(N, Lsl, V, diffColor, specColor, materialShininess*2);// Blinn-Phong shading
         // Get the incoming light intensity including inverse-square-law attenuation and cone attenuation
         vec3 intSpotLight = getSpotLightIntensity(spotLight[i].Color, vertexData.toSpotLight[i], spotLight[i].Direction, spotLight[i].Cone);
         // Multiply BRDF with incoming light intensity to get total color contribution for spot light i

@@ -3,19 +3,25 @@ package cga.exercise.game.scene
 import cga.exercise.components.camera.Aspectratio
 import cga.exercise.components.camera.Camera
 import cga.exercise.components.camera.OrbitCamera
-import cga.exercise.components.geometry.Renderable
-import cga.exercise.components.geometry.Transformable
+import cga.exercise.components.geometry.*
+import cga.exercise.components.texture.Texture2D
 import cga.exercise.game.GameType
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
+import cga.framework.OBJLoader
 import org.joml.Math
+import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11
 
 class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
+
+    private val groundMaterial: Material
+    private val ground: Renderable
+    private val groundColor: Vector3f
 
     private val playerPOV: Renderable
 
@@ -46,6 +52,31 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
     private var firstMouseMove = true
 
     init {
+
+        // ground init
+        val groundDiff = Texture2D("assets/textures/stone_floor/Stone_Tiles_002_COLOR.jpg", true)
+        groundDiff.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
+        val groundSpecular = Texture2D("assets/textures/stone_floor/Stone_Tiles_002_DISP.png", true)
+        groundSpecular.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
+        val groundEmit = Texture2D("assets/textures/stone_floor/Stone_Tiles_002_OCC.jpg", true)
+        groundEmit.setTexParams(GL11.GL_REPEAT, GL11.GL_REPEAT, GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR)
+        groundMaterial = Material(groundDiff, groundEmit, groundSpecular, 60f, Vector2f(64.0f, 64.0f))
+        groundColor = Vector3f(0.8f)
+
+        //load an object and create a mesh
+        val gres = OBJLoader.loadOBJ("assets/models/ground.obj")
+        //Create the mesh
+        val stride = 8 * 4
+        val atr1 = VertexAttribute(3, GL11.GL_FLOAT, stride, 0)     //position attribute
+        val atr2 = VertexAttribute(2, GL11.GL_FLOAT, stride, 3 * 4) //texture coordinate attribute
+        val atr3 = VertexAttribute(3, GL11.GL_FLOAT, stride, 5 * 4) //normal attribute
+        val vertexAttributes = arrayOf(atr1, atr2, atr3)
+        //Create renderable
+        ground = Renderable()
+        for (m in gres.objects[0].meshes) {
+            val mesh = Mesh(m.vertexData, m.indexData, vertexAttributes, groundMaterial)
+            ground.meshes.add(mesh)
+        }
 
         // for easier development: target for orbit cam
         playerPOV = loadModel("assets/project_models/Eichhoernchen/squirrel.obj", 0f, 0f, 0f)
@@ -90,9 +121,8 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         originalLily = loadModel("assets/project_models/MemorizeGameScene/Wasserlilie/orig/lily.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the lily")
         objList.add(originalLily)
-        originalLily.scale(Vector3f(0.3f))
-        originalLily.preTranslate(Vector3f(2.85f, 0.85f, -0.053f))
-        originalLily.rotate(Math.toRadians(-20f), Math.toRadians(-92f), 0f)
+        originalLily.scale(Vector3f(0.1f))
+        originalLily.preTranslate(Vector3f(2.85f, 0.85f, -0.05f))
 
 
         /**
@@ -129,6 +159,7 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         //camera.preTranslate(Vector3f(-24f, 0.7f, -0.05f))
         camera.setPosition(Vector3f(-24f, 0.7f, -0.05f))
         //camera.lookAt(Vector3f(0f, 0.7f, 1f)) // +x vorwärts, +y geht hoch, +z nach rechts
+
         /**
          * setup developer Camera (for easier object placement)
          */
@@ -150,9 +181,13 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
         super.render(dt, t)
 
+        staticShader.use()
+        staticShader.setUniform("shadingColor", groundColor)
+        ground.render(staticShader)
+
         devCamera.bind(staticShader)
         devCamera.updateCameraPosition()
-        camera.bind(staticShader)
+        //camera.bind(staticShader)
 
 
         for (obj in objList) {
@@ -164,7 +199,7 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
     override fun update(dt: Float, t: Float) {
 
-        val moveMul = 3.0f
+        val moveMul = 15.0f
         val rotateMul = 1f * Math.PI.toFloat()
 
         /**
@@ -179,17 +214,14 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         }
 
         // STAGE 1
-        // initial position: flower
         // pluspunkt bei richtiger antwort + teleportation zum nächsten spiel
-        // println()s zum Debuggen
         // die else ifs verhindern ein punkte increasen/kamera verschieben wenn taste länger als
-        // 1 framelänge gedrückt wird (was sehr wahrscheinlich ist)
-        //
+        // 1 framelänge gedrückt wird :/
+
         if (memoStage == MemoStage.FLOWER) {
 
             if (window.getKeyState(GLFW.GLFW_KEY_Q)) {
                 pointsP1 = 1
-                println("$pointsP1 und $pointsP2")
                 camera.setPosition(Vector3f(10f, 0f, 0f))
                 memoStage = MemoStage.RAKE
             }
@@ -205,7 +237,6 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
             if (window.getKeyState(GLFW.GLFW_KEY_A)) {
                 pointsP1 = if (pointsP1 == 0) 1 else 2
-                println("$pointsP1 und $pointsP2")
                 camera.setPosition(Vector3f(10f, 0f, 0f))
                 memoStage = MemoStage.LILY
             }
@@ -221,7 +252,6 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
             if (window.getKeyState(GLFW.GLFW_KEY_S)) {
                 pointsP1 = if (pointsP1 == 0) 1 else if (pointsP1 == 1) 2 else 3
-                println("$pointsP1 und $pointsP2")
                 if (pointsP1 > pointsP2) {
                     camera.setPosition(Vector3f(10f, 0f, 0f))
 
@@ -229,7 +259,7 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
                     camera.setPosition(Vector3f(10f, 0f, 0f))
 
                 }
-                memoStage = MemoStage.DONE
+                memoStage = MemoStage.WIN
             }
             if (window.getKeyState(GLFW.GLFW_KEY_J)) {
                 pointsP2 = if (pointsP2 == 0) 1 else if (pointsP2 == 1) 2 else 3
@@ -239,10 +269,18 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
                 } else if (pointsP1 < pointsP2) {
                     camera.setPosition(Vector3f(10f, 0f, 0f))
                 }
-                memoStage = MemoStage.DONE
+                memoStage = MemoStage.WIN
             }
 
         }
+
+        if (memoStage == MemoStage.WIN) {
+            val string =
+                if (pointsP1 > pointsP2) "Player 1 won with $pointsP1 points!" else "Player 2 won with $pointsP2 points!"
+            println(string)
+            memoStage = MemoStage.DONE
+        }
+
 
         // Memo stage done:
         // do nothing. stand still. let players end game with SPACE as instructed

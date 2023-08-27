@@ -37,7 +37,7 @@ out struct VertexData
 {
     vec2 textureCoordinate;
     vec3 normal;
-    // Vectors needed for lighting calculations. Must not be normalized in the vertex shader (interpolation would mess them up).
+// Vectors needed for lighting calculations. Must not be normalized in the vertex shader (interpolation would mess them up).
     vec3 toCamera;
     vec3 toPointLight[MAX_POINT_LIGHTS];
     vec3 toSpotLight[MAX_SPOT_LIGHTS];
@@ -58,6 +58,7 @@ void main(){
     for (int i = 0; i < numSpotLights; i++) {
         vertexData.toSpotLight[i] = (view_matrix * vec4(spotLight[i].Position, 1.0)).xyz - viewpos.xyz;
     }
+
     gl_Position = proj_matrix * viewpos;
     // Calculate surface normal and texture coordinate
     vertexData.normal = (inverse(transpose(modelview)) * vec4(normal, 0.0f)).xyz;
