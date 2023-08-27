@@ -41,7 +41,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
 
     /** OBJECTS **/
     private val objList: MutableList<Renderable> = mutableListOf()
-    private val auto: Renderable
+    private val snail: Renderable
     private val bike: Renderable
     private val mainChar: Renderable
     private val secChar: Renderable
@@ -86,17 +86,18 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         }
         objList.add(racetrack)
 
-        auto =
-            loadModel("assets/project_models/Auto/Auto.obj",
-                Math.toRadians(-90.0f),
-                Math.toRadians(90.0f),
-                0.0f)
-
-                ?: throw IllegalArgumentException("Could not load the hose")
-
-        auto.apply {
-            rotate(0f, Math.toRadians(-90.0f), Math.toRadians(-90f))
+        snail = loadModel(
+            "assets/project_models/Schnecke/Mesh_Snail.obj",
+            0f, Math.toRadians(180f),
+            0.0f
+        )
+            ?: throw IllegalArgumentException("Could not load the snail")
+        snail.apply {
+            rotate(0.0f,Math.toRadians(180f),0.0f)
+            translate(Vector3f(1.0f,0.0f,0.0f))
+            scale(Vector3f(0.8f))
         }
+        objList.add(snail)
 
         /** CAMERAS **/
         p1Camera = Camera(
@@ -121,9 +122,6 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
 
         skyColor = Vector3f(1f)
 
-        /**
-         * Setup Skybox
-         */
 
         skybox = loadModel(
             "assets/project_models/Skybox/anime_sky.obj",
@@ -173,7 +171,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         glEnable(GL_DEPTH_TEST); GLError.checkThrow()
         glDepthFunc(GL_LESS); GLError.checkThrow()
 
-        mainChar = bike
+        mainChar = snail
         p1Camera.parent = mainChar
 
         secChar = squirrel
