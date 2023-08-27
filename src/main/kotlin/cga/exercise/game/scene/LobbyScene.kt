@@ -45,9 +45,14 @@ class LobbyScene(override val window: GameWindow) : AScene() {
     private val objList: MutableList<Renderable> = mutableListOf()
 
     // GROUND
-    private val groundMaterial : Material
-    private val ground : Renderable
+    private val groundMaterial: Material
+    private val ground: Renderable
     private val groundColor: Vector3f
+
+    // SIGNS
+    private val signRace: Renderable
+    private val signJump: Renderable
+    private val signMemo: Renderable
 
     // OTHER OBJECTS
     private val garden: Renderable
@@ -57,7 +62,8 @@ class LobbyScene(override val window: GameWindow) : AScene() {
     private val shovel: Renderable
     private val rake: Renderable
     private val snail: Renderable
-    private val hose: Renderable
+    private val backpack: Renderable
+
 
     //SKYBOX
     private val skybox: Renderable
@@ -99,6 +105,34 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         objList.add(garden)
 
 
+        /**
+         * Schilder: erklären Navigation
+         */
+
+        // says "Race Track"
+        signRace =
+            loadModel("assets/project_models/Schilder/signRace.obj", Math.toRadians(-90f), Math.toRadians(10f), 0f)
+                ?: throw IllegalArgumentException("Could not load the signR")
+        objList.add(signRace)
+        signRace.preTranslate(Vector3f(4f, 0.1f, 2f))
+        signRace.scale(Vector3f(0.5f))
+
+        // says "Campsite"
+        signJump =
+            loadModel("assets/project_models/Schilder/signJump.obj", Math.toRadians(-95f), Math.toRadians(-90f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the signJ")
+        objList.add(signJump)
+        signJump.preTranslate(Vector3f(-3.7f, 0.1f, 2.1f))
+        signJump.scale(Vector3f(0.5f))
+
+        // says "Dump"
+        signMemo =
+            loadModel("assets/project_models/Schilder/signMemo.obj", Math.toRadians(-85f), Math.toRadians(-150f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the signM")
+        objList.add(signMemo)
+        signMemo.preTranslate(Vector3f(-1.7f, 0.1f, -5f))
+        signMemo.scale(Vector3f(0.5f))
+
         // bounding box links
         garden.boundingBoxList[0] = AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(-4.6f, 0f, 3f))
 
@@ -117,9 +151,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         shovel =
             loadModel("assets/project_models/Schaufel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
                 ?: throw IllegalArgumentException("Could not load the shovel")
-        shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
-        shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
-        shovel.scale(Vector3f(0.27f))
+
         objList.add(shovel)
 
         snail = loadModel(
@@ -141,29 +173,20 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
         objList.add(rake)
 
-        hose =
-            loadModel("assets/project_models/Schlauch/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-                ?: throw IllegalArgumentException("Could not load the hose")
-        hose.translate(
-            Vector3f(
-                0f,
-                0.2f,
-                -1.4f
-            )
-        ) // object space: y links, -y rechts, x runter, -x hoch, z vorwärts, -z rückwärts
-        hose.rotate(
-            Math.toRadians(-150f),
-            Math.toRadians(10.0f),
-            Math.toRadians(-17.0f)
-        ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
-        hose.scale(Vector3f(0.1f))
-        objList.add(hose)
+        backpack =
+            loadModel("assets/project_models/Rucksack/backpack.obj", Math.toRadians(-90f), Math.toRadians(-90f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the backpack")
+        objList.add(backpack)
+        backpack.preTranslate(Vector3f())
+
+        rake.parent = garden
         shovel.parent = garden
-        hose.parent = garden
+
         /**
          * Wenn der Garten nachträglich transformiert wird,
          * bewegen sich ab hier die entsprechenden Gegenstände mit.
          */
+
         garden.scale(Vector3f(1.4f)) // Gesamtgarten größer gemacht
         // nur kurz höher gemacht, damit man den original Boden nicht dadurch sieht.
         // Sobald wir den alten Boden entfernen, kann diese Translation entfernt werden.
@@ -207,7 +230,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         camera.parent = mainChar
         orbitCamera = OrbitCamera(mainChar)
         secChar = snail
-        secChar.translate(Vector3f(1f, 0f, 1f))
+        secChar.translate(Vector3f(1f, 0f, 0.5f))
         secChar.parent = squirrel
 
         objList.add(mainChar)
@@ -239,7 +262,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
 
     override fun update(dt: Float, t: Float) {
 
-        val moveMul = 15.0f
+        val moveMul = 5.0f
         val rotateMul = 2f * Math.PI.toFloat()
 
         if (window.getKeyState(GLFW_KEY_W)) {

@@ -187,7 +187,7 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
         devCamera.bind(staticShader)
         devCamera.updateCameraPosition()
-        camera.bind(staticShader)
+        //camera.bind(staticShader)
 
 
         for (obj in objList) {
@@ -199,7 +199,7 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
     override fun update(dt: Float, t: Float) {
 
-        val moveMul = 3.0f
+        val moveMul = 15.0f
         val rotateMul = 1f * Math.PI.toFloat()
 
         /**
