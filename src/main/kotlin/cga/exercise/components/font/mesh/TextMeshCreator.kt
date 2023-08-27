@@ -1,131 +1,113 @@
 package cga.exercise.components.font.mesh
 
-import cga.exercise.components.gui.GuiText
 import java.io.File
-import java.lang.Integer.parseInt
 
 class TextMeshCreator(metaFile: File) {
-    companion object {
-        val LINE_HEIGHT = 0.03f
-        val SPACE_ASCII = 32
-    }
-
     private val metaData: MetaFile
 
     init {
         metaData = MetaFile(metaFile)
     }
 
-    fun createTextMesh(text: GuiText): TextMeshData {
+    fun createTextMesh(text: GUIText): TextMeshData {
         val lines = createStructure(text)
         return createQuadVertices(text, lines)
     }
 
-    private fun createStructure(text: GuiText): ArrayList<Line> {
-        val chars: CharArray = text.getTextString().toCharArray()
-        val lines: ArrayList<Line> = ArrayList<Line>()
-        var currentLine = Line(metaData.getSpaceWidth(), text.getFontSize(), text.getMaxLineSize())
-        var currentWord = Word(text.getFontSize())
-
+    private fun createStructure(text: GUIText): List<Line> {
+        val chars = text.textString.toCharArray()
+        val lines: MutableList<Line> = ArrayList()
+        var currentLine = Line(metaData.spaceWidth, text.fontSize, text.maxLineLength)
+        var currentWord = Word(text.fontSize.toDouble())
         for (c in chars) {
-            val ascii = parseInt(c.toString())
-
+            val ascii = c.code
             if (ascii == SPACE_ASCII) {
-                val added = currentLine.addWord(currentWord)
+                val added = currentLine.attemptToAddWord(currentWord)
                 if (!added) {
                     lines.add(currentLine)
-                    currentLine = Line(metaData.getSpaceWidth(), text.getFontSize(), text.getMaxLineSize())
-                    currentLine.addWord(currentWord)
+                    currentLine = Line(metaData.spaceWidth, text.fontSize, text.maxLineLength)
+                    currentLine.attemptToAddWord(currentWord)
                 }
-                currentWord = Word(text.getFontSize())
+                currentWord = Word(text.fontSize)
                 continue
             }
-
-            val character: Character = metaData.getCharacter(ascii)
+            val character = metaData.getCharacter(ascii)
+                ?: throw IllegalArgumentException("Could not get character for that ASCII code")
             currentWord.addCharacter(character)
         }
         completeStructure(lines, currentLine, currentWord, text)
         return lines
     }
 
-    private fun completeStructure(lines: ArrayList<Line>, currentLine: Line, currentWord: Word, text: GuiText) {
-        var currLine = currentLine
-        val added = currentLine.addWord(currentWord)
+    private fun completeStructure(lines: MutableList<Line>, currentLine: Line, currentWord: Word, text: GUIText) {
+        var currentLine = currentLine
+        val added = currentLine.attemptToAddWord(currentWord)
         if (!added) {
             lines.add(currentLine)
-            currLine = Line(metaData.getSpaceWidth(), text.getFontSize(), text.getMaxLineSize())
-            currLine.addWord(currentWord)
+            currentLine = Line(metaData.spaceWidth, text.fontSize.toDouble(), text.maxLineLength.toDouble())
+            currentLine.attemptToAddWord(currentWord)
         }
-        lines.add(currLine)
+        lines.add(currentLine)
     }
 
-    private fun createQuadVertices(text: GuiText, lines: ArrayList<Line>): TextMeshData {
-        text.setNumberOfLines(lines.size)
-        var cursorX = 0f
-        var cursorY = 0f
-        val vertices = ArrayList<Float>()
-        val textureCoords = ArrayList<Float>()
-
+    private fun createQuadVertices(text: GUIText, lines: List<Line>): TextMeshData {
+        text.numberOfLines = lines.size
+        var cursorX = 0.0
+        var cursorY = 0.0
+        val vertices: MutableList<Float> = ArrayList()
+        val textureCoords: MutableList<Float> = ArrayList()
         for (line in lines) {
-            if (text.isCentered()) {
-                cursorX = (line.getMaxLength() - line.getLineLength()) / 2
+            if (text.centered) {
+                cursorX = (line.maxLength - line.lineLength) / 2
             }
             for (word in line.getWords()) {
-                for (letter in word.getCharacters()) {
-                    addVerticesForCharacter(cursorX, cursorY, letter, text.getFontSize(), vertices)
-                    addDataToFloatList(
-                        textureCoords,
-                        letter.xTextureCoord,
-                        letter.yTextureCoord,
-                        letter.xMaxTextureCoord,
-                        letter.yMaxTextureCoord
+                for (letter in word.characters) {
+                    addVerticesForCharacter(cursorX, cursorY, letter, text.fontSize.toDouble(), vertices)
+                    addToFloatArray(
+                        textureCoords, letter.xTextureCoord, letter.yTextureCoord,
+                        letter.xMaxTextureCoord, letter.yMaxTextureCoord
                     )
-                    cursorX += letter.xAdvance * text.getFontSize()
+                    cursorX += letter.xAdvance * text.fontSize
                 }
-                cursorX += metaData.getSpaceWidth() * text.getFontSize()
+                cursorX += metaData.spaceWidth * text.fontSize
             }
-            cursorX = 0f
-            cursorY += LINE_HEIGHT * text.getFontSize()
+            cursorX = 0.0
+            cursorY += LINE_HEIGHT * text.fontSize
         }
         return TextMeshData(vertices.toFloatArray(), textureCoords.toFloatArray())
     }
 
     private fun addVerticesForCharacter(
-        cursorX: Float,
-        cursorY: Float,
-        character: Character,
-        fontSize: Float,
-        vertices: ArrayList<Float>
+        cursorX: Double, cursorY: Double, character: Character, fontSize: Double,
+        vertices: MutableList<Float>
     ) {
-        val x = cursorX + (character.xOffset * fontSize)
-        val y = cursorY + (character.yOffset * fontSize)
-        val maxX = x + (character.sizeX * fontSize)
-        val maxY = y + (character.sizeY * fontSize)
-        val properX = (2 * x) - 1
-        val properY = (-2 * y) + 1
-        val properMaxX = (2 * maxX) - 1
-        val properMaxY = (-2 * maxY) + 1
-        addDataToFloatList(vertices, properX, properY, properMaxX, properMaxY)
+        val x: Double = cursorX + character.xOffset * fontSize
+        val y: Double = cursorY + character.yOffset * fontSize
+        val maxX: Double = x + character.sizeX * fontSize
+        val maxY: Double = y + character.sizeY * fontSize
+        val properX = 2 * x - 1
+        val properY = -2 * y + 1
+        val properMaxX = 2 * maxX - 1
+        val properMaxY = -2 * maxY + 1
+        addToFloatArray(vertices, properX, properY, properMaxX, properMaxY)
     }
 
-    private fun addDataToFloatList(vertices: ArrayList<Float>, x: Float, y: Float, maxX: Float, maxY: Float) {
-        vertices.add(x)
-        vertices.add(y)
-
-        vertices.add(x)
-        vertices.add(maxY)
-
-        vertices.add(maxX)
-        vertices.add(maxY)
-
-        vertices.add(maxX)
-        vertices.add(maxY)
-
-        vertices.add(maxX)
-        vertices.add(y)
-
-        vertices.add(x)
-        vertices.add(y)
+    companion object {
+        const val LINE_HEIGHT = 0.03
+        const val SPACE_ASCII = 32
+        private fun addToFloatArray(floatArray: MutableList<Float>, x: Double, y: Double, maxX: Double, maxY: Double) {
+            floatArray.add(x.toFloat())
+            floatArray.add(y.toFloat())
+            floatArray.add(x.toFloat())
+            floatArray.add(maxY.toFloat())
+            floatArray.add(maxX.toFloat())
+            floatArray.add(maxY.toFloat())
+            floatArray.add(maxX.toFloat())
+            floatArray.add(maxY.toFloat())
+            floatArray.add(maxX.toFloat())
+            floatArray.add(y.toFloat())
+            floatArray.add(x.toFloat())
+            floatArray.add(y.toFloat())
+        }
     }
-
 }

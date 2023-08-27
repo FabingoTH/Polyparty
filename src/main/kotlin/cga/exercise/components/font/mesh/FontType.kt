@@ -1,23 +1,17 @@
 package cga.exercise.components.font.mesh
 
-import cga.exercise.components.gui.GuiText
 import cga.exercise.components.texture.Texture2D
 import java.io.File
 
 /**
  * Represents a font. It holds the font's texture atlas as well as having the
  * ability to create the quad vertices for any text using this font.
- *
  */
-class FontType(private val textureAtlas: Texture2D, fontFile: File) {
+class FontType(val textureAtlas: Texture2D, fontFile: File) {
     private val loader: TextMeshCreator
 
     init {
         loader = TextMeshCreator(fontFile)
-    }
-
-    fun getTextureAtlas(): Texture2D {
-        return textureAtlas
     }
 
     /**
@@ -28,8 +22,7 @@ class FontType(private val textureAtlas: Texture2D, fontFile: File) {
      * @param text the unloaded text.
      * @return Information about the vertices of all the quads.
      */
-    fun loadText(text: GuiText): TextMeshData {
+    fun loadText(text: GUIText): TextMeshData {
         return loader.createTextMesh(text)
     }
-
 }

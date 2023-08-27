@@ -2,33 +2,34 @@ package cga.exercise.components.font.mesh
 
 import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
 import java.io.IOException
 
+/**
+ * Provides functionality for getting the values from a font file.
+ *
+ * @author Karl
+ */
 class MetaFile(file: File) {
-    private val PAD_TOP = 0
-    private val PAD_LEFT = 1
-    private val PAD_BOTTOM = 2
-    private val PAD_RIGHT = 3
+    private val aspectRatio: Double = 16.0 / 9.0
+    private var verticalPerPixelSize = 0.0
+    private var horizontalPerPixelSize = 0.0
+    var spaceWidth = 0.0
+        private set
 
-    private val DESIRED_PADDING = 3
+    private lateinit var padding: IntArray
+    private var paddingWidth = 0
+    private var paddingHeight = 0
+    private val metaData: MutableMap<Int, Character> = HashMap()
+    private var reader: BufferedReader? = null
+    private val values: MutableMap<String, String> = HashMap()
 
-    private val SPLITTER = " "
-    private val NUMBER_SEPERATOR = ","
-
-    private val aspectRatio: Float = 16f / 9f
-
-    private var verticalPerPixelSize: Float = 0.0f
-    private var horizontalPerPixelSize: Float = 0.0f
-    private var spaceWidth: Float = 0.0f
-    private var padding: IntArray = intArrayOf()
-    private var paddingWidth: Int = 0
-    private var paddingHeight: Int = 0
-
-    private val metaData = HashMap<Int, Character>()
-
-    private lateinit var reader: BufferedReader
-    private var values = HashMap<String, String>()
-
+    /**
+     * Opens a font file in preparation for reading.
+     *
+     * @param file
+     * - the font file.
+     */
     init {
         openFile(file)
         loadPaddingData()
@@ -38,30 +39,28 @@ class MetaFile(file: File) {
         close()
     }
 
-    fun getSpaceWidth(): Float {
-        return spaceWidth
-    }
-
-    fun getCharacter(ascii: Int): Character {
-        return metaData[ascii] ?: throw IllegalArgumentException("Character with that ASCII code not found")
+    fun getCharacter(ascii: Int): Character? {
+        return metaData[ascii]
     }
 
     /**
-     * Read in the next line and store the variable values
-     * @return true if the end of the file hasn't been reached
+     * Read in the next line and store the variable values.
+     *
+     * @return `true` if the end of the file hasn't been reached.
      */
     private fun processNextLine(): Boolean {
-        values = HashMap<String, String>()
+        values.clear()
         var line: String? = null
         try {
-            line = reader.readLine()
-        } catch (_: IOException) {
+            line = reader!!.readLine()
+        } catch (e1: IOException) {
         }
-
-        if (line == null) return false
-
-        for (part: String in line.split(SPLITTER)) {
-            val valuePairs: List<String> = part.split("=")
+        if (line == null) {
+            return false
+        }
+        for (part in line.split(SPLITTER.toRegex()).dropLastWhile { it.isEmpty() }
+            .toTypedArray()) {
+            val valuePairs = part.split("=".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             if (valuePairs.size == 2) {
                 values[valuePairs[0]] = valuePairs[1]
             }
@@ -70,29 +69,30 @@ class MetaFile(file: File) {
     }
 
     /**
-     * Gets the int value of the variable with the given name on the current line
+     * Gets the `int` value of the variable with a certain name on the
+     * current line.
      *
-     * @param variable the name of the variable
-     * @return the value of the variable
+     * @param variable
+     * - the name of the variable.
+     * @return The value of the variable.
      */
     private fun getValueOfVariable(variable: String): Int {
-        return Integer.parseInt(values[variable])
+        return values[variable]!!.toInt()
     }
 
     /**
      * Gets the array of ints associated with a variable on the current line.
      *
      * @param variable
-     *            - the name of the variable.
+     * - the name of the variable.
      * @return The int array of values associated with the variable.
      */
     private fun getValuesOfVariable(variable: String): IntArray {
-        val numbers: List<String> = values[variable]?.split(NUMBER_SEPERATOR)
-            ?: throw IllegalArgumentException("Could not find values for that variable")
-        val actualValues: IntArray = IntArray(numbers.size)
-
-        for (i in 0..actualValues.size) {
-            actualValues[i] = Integer.parseInt(numbers[i])
+        val numbers = values[variable]!!.split(NUMBER_SEPARATOR.toRegex()).dropLastWhile { it.isEmpty() }
+            .toTypedArray()
+        val actualValues = IntArray(numbers.size)
+        for (i in actualValues.indices) {
+            actualValues[i] = numbers[i].toInt()
         }
         return actualValues
     }
@@ -102,7 +102,7 @@ class MetaFile(file: File) {
      */
     private fun close() {
         try {
-            reader.close()
+            reader!!.close()
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -112,17 +112,16 @@ class MetaFile(file: File) {
      * Opens the font file, ready for reading.
      *
      * @param file
-     *            - the font file.
+     * - the font file.
      */
     private fun openFile(file: File) {
         try {
-            reader = file.bufferedReader()
+            reader = BufferedReader(FileReader(file))
         } catch (e: Exception) {
             e.printStackTrace()
-            System.err.println("Could not read the font meta file!")
+            System.err.println("Couldn't read font meta file!")
         }
     }
-
 
     /**
      * Loads the data about how much padding is used around each character in
@@ -143,15 +142,16 @@ class MetaFile(file: File) {
     private fun loadLineSizes() {
         processNextLine()
         val lineHeightPixels = getValueOfVariable("lineHeight") - paddingHeight
-        verticalPerPixelSize = TextMeshCreator.LINE_HEIGHT / lineHeightPixels.toFloat()
+        verticalPerPixelSize = TextMeshCreator.LINE_HEIGHT / lineHeightPixels.toDouble()
         horizontalPerPixelSize = verticalPerPixelSize / aspectRatio
     }
 
     /**
      * Loads in data about each character and stores the data in the
-     * Character class.
+     * [Character] class.
      *
-     * @param imageWidth the width of the texture atlas in pixels.
+     * @param imageWidth
+     * - the width of the texture atlas in pixels.
      */
     private fun loadCharacterData(imageWidth: Int) {
         processNextLine()
@@ -169,7 +169,8 @@ class MetaFile(file: File) {
      * it all from 'pixels' to 'screen-space' before storing. The effects of
      * padding are also removed from the data.
      *
-     * @param imageSize the size of the texture atlas in pixels.
+     * @param imageSize
+     * - the size of the texture atlas in pixels.
      * @return The data about the character.
      */
     private fun loadCharacter(imageSize: Int): Character? {
@@ -178,22 +179,38 @@ class MetaFile(file: File) {
             spaceWidth = (getValueOfVariable("xadvance") - paddingWidth) * horizontalPerPixelSize
             return null
         }
-        val xTex = (getValueOfVariable("x").toFloat() + (padding[PAD_LEFT] - DESIRED_PADDING)) / imageSize
-        val yTex = (getValueOfVariable("y").toFloat() + (padding[PAD_TOP] - DESIRED_PADDING)) / imageSize
-
-        val width = getValueOfVariable("width") - (paddingWidth - (2 * DESIRED_PADDING))
-        val height = getValueOfVariable("height") - (paddingHeight - (2 * DESIRED_PADDING))
-
+        val xTex = (getValueOfVariable("x").toDouble() + (padding[PAD_LEFT] - DESIRED_PADDING)) / imageSize
+        val yTex = (getValueOfVariable("y").toDouble() + (padding[PAD_TOP] - DESIRED_PADDING)) / imageSize
+        val width = getValueOfVariable("width") - (paddingWidth - 2 * DESIRED_PADDING)
+        val height = getValueOfVariable("height") - (paddingHeight - 2 * DESIRED_PADDING)
         val quadWidth = width * horizontalPerPixelSize
         val quadHeight = height * verticalPerPixelSize
-
-        val xTexSize = width.toFloat() / imageSize.toFloat()
-        val yTexSize = height.toFloat() / imageSize.toFloat()
-
+        val xTexSize = width.toDouble() / imageSize
+        val yTexSize = height.toDouble() / imageSize
         val xOff = (getValueOfVariable("xoffset") + padding[PAD_LEFT] - DESIRED_PADDING) * horizontalPerPixelSize
-        val yOff = (getValueOfVariable("yoffset") + padding[PAD_TOP] - DESIRED_PADDING) * verticalPerPixelSize
+        val yOff = (getValueOfVariable("yoffset") + (padding[PAD_TOP] - DESIRED_PADDING)) * verticalPerPixelSize
         val xAdvance = (getValueOfVariable("xadvance") - paddingWidth) * horizontalPerPixelSize
+        return Character(
+            id,
+            xTex,
+            yTex,
+            xTexSize,
+            yTexSize,
+            xOff,
+            yOff,
+            quadWidth,
+            quadHeight,
+            xAdvance
+        )
+    }
 
-        return Character(id, xTex, yTex, xTexSize, yTexSize, xOff, yOff, quadWidth, quadHeight, xAdvance)
+    companion object {
+        private const val PAD_TOP = 0
+        private const val PAD_LEFT = 1
+        private const val PAD_BOTTOM = 2
+        private const val PAD_RIGHT = 3
+        private const val DESIRED_PADDING = 3
+        private const val SPLITTER = " "
+        private const val NUMBER_SEPARATOR = ","
     }
 }

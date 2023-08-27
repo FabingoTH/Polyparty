@@ -13,13 +13,15 @@ import java.nio.file.Paths
 /**
  * Created by Fabian on 16.09.2017.
  */
-class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
+open class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
     private var programID: Int = 0
+
     //Matrix buffers for setting matrix uniforms. Prevents allocation for each uniform
     private val m3x3buf: FloatBuffer = BufferUtils.createFloatBuffer(9)
     private val m4x4buf: FloatBuffer = BufferUtils.createFloatBuffer(16)
     private var currentTextureUnit = 0
     private var tuSave: Int
+
     /**
      * Sets the active shader program of the OpenGL render pipeline to this shader
      * if this isn't already the currently active shader
@@ -174,7 +176,7 @@ class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
         }
         return false
     }
-    
+
     // --------------------- unsigned int vector uniforms ---------------------
     /**
      *
@@ -239,7 +241,7 @@ class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
         }
         return false
     }
-    
+
     // ---------------------------- matrix uniforms ---------------------------
     /**
      *

@@ -1,13 +1,14 @@
 package cga.exercise.components.font.mesh
 
 /**
- * Represents a line of text during loading of a text
+ * Represents a line of text during the loading of a text.
  */
-class Line(spaceWidth: Float, fontSize: Float, private val maxLength: Float) {
-    private var spaceSize: Float
+class Line(spaceWidth: Double, fontSize: Double, val maxLength: Double) {
+    private val spaceSize: Double
+    private val words: MutableList<Word> = ArrayList()
 
-    private val words: ArrayList<Word> = ArrayList<Word>()
-    private var currentLineLength: Float = 0f
+    var lineLength = 0.0
+        private set
 
     init {
         spaceSize = spaceWidth * fontSize
@@ -19,29 +20,24 @@ class Line(spaceWidth: Float, fontSize: Float, private val maxLength: Float) {
      * line length increased.
      *
      * @param word the word to try to add.
-     * @return true if the word has successfully been added to the line.
+     * @return `true` if the word has successfully been added to the line.
      */
-    fun addWord(word: Word): Boolean {
-        var additionalLength: Float = word.getWordWidth()
-        additionalLength += if (words.isEmpty()) 0f else spaceSize
-
-        if (currentLineLength + additionalLength <= maxLength) {
+    fun attemptToAddWord(word: Word): Boolean {
+        var additionalLength = word.wordWidth
+        additionalLength += if (words.isNotEmpty()) spaceSize else 0.0
+        return if (lineLength + additionalLength <= maxLength) {
             words.add(word)
-            currentLineLength += additionalLength
-            return true
+            lineLength += additionalLength
+            true
+        } else {
+            false
         }
-        return false
     }
 
-    fun getMaxLength(): Float {
-        return maxLength
-    }
-
-    fun getLineLength(): Float {
-        return currentLineLength
-    }
-
-    fun getWords(): ArrayList<Word> {
+    /**
+     * @return The list of words in the line.
+     */
+    fun getWords(): List<Word> {
         return words
     }
 }
