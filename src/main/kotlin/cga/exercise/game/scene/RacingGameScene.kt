@@ -28,13 +28,6 @@ import org.lwjgl.opengl.GL11.*
  */
 class RacingGameScene(override val window: GameWindow) : AScene() {
 
-    /** LIGHTS **/
-    private val bikePointLight: PointLight
-    private val pointLightList = mutableListOf<PointLight>()
-
-    private val bikeSpotLight: SpotLight
-    private val spotLightList = mutableListOf<SpotLight>()
-
     /** CAMERA **/
     private val p1Camera: Camera
     private val p2Camera : Camera
@@ -42,7 +35,6 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     /** OBJECTS **/
     private val objList: MutableList<Renderable> = mutableListOf()
     private val snail: Renderable
-    private val bike: Renderable
     private val mainChar: Renderable
     private val secChar: Renderable
     private val squirrel: Renderable
@@ -55,18 +47,15 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     //scene setup
     init {
 
-        bike = loadModel(
-            "assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
-            0.0f
-        ) ?: throw IllegalArgumentException("Could not load the bike")
-        bike.apply {
-            rotate(0.0f,Math.toRadians(180f),0.0f)
-            translate(Vector3f(-1.0f,0.0f,0.0f))
-            scale(Vector3f(0.8f, 0.8f, 0.8f))
+        /** MODELS **/
+        racetrack =
+            loadModel("assets/project_models/Rennstrecke/autodraha.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+                ?: throw IllegalArgumentException("Could not load the hose")
+        racetrack.apply {
+            rotate(0f, Math.toRadians(-90.0f), Math.toRadians(-90f))
+            scale(Vector3f(0.6f))
         }
-        objList.add(bike)
+        objList.add(racetrack)
 
         squirrel = loadModel(
             "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
@@ -77,15 +66,6 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         }
         objList.add(squirrel)
 
-        racetrack =
-            loadModel("assets/project_models/Rennstrecke/autodraha.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-                ?: throw IllegalArgumentException("Could not load the hose")
-        racetrack.apply {
-            rotate(0f, Math.toRadians(-90.0f), Math.toRadians(-90f))
-            scale(Vector3f(0.6f))
-        }
-        objList.add(racetrack)
-
         snail = loadModel(
             "assets/project_models/Schnecke/Mesh_Snail.obj",
             0f, Math.toRadians(180f),
@@ -94,7 +74,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
             ?: throw IllegalArgumentException("Could not load the snail")
         snail.apply {
             rotate(0.0f,Math.toRadians(180f),0.0f)
-            translate(Vector3f(1.0f,0.0f,0.0f))
+            translate(Vector3f(-1.0f,0.0f,0.0f))
             scale(Vector3f(0.8f))
         }
         objList.add(snail)
@@ -106,7 +86,6 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
             0.1f,
             5000.0f
         )
-
         p1Camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         p1Camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
@@ -116,13 +95,11 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
             0.1f,
             5000.0f
         )
-
         p2Camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         p2Camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
+        /** SKYBOX **/
         skyColor = Vector3f(1f)
-
-
         skybox = loadModel(
             "assets/project_models/Skybox/anime_sky.obj",
             Math.toRadians(-90.0f),
@@ -136,33 +113,6 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         }
         objList.add(skybox)
 
-        //bike pointlight
-        bikePointLight =
-            PointLight(
-                "pointLight[${pointLightList.size}]",
-                Vector3f(0.0f, 2.0f, 0.0f),
-                Vector3f(0.0f, 0.5f, 0.0f))
-        bikePointLight.parent = bike
-        pointLightList.add(bikePointLight)
-
-        //bike spotlight
-        bikeSpotLight = SpotLight(
-            "spotLight[${spotLightList.size}]",
-            Vector3f(1f),
-            Vector3f(0f, 1f, -2f),
-            Math.toRadians(0.0f),
-            Math.toRadians(0.0f)
-        )
-        //bikeSpotLight.rotate(Math.toRadians(-10.0f), 0.0f, 0.0f)
-        bikeSpotLight.parent = bike
-        spotLightList.add(bikeSpotLight)
-
-        // additional lights in the scene
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
-        spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
-        spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
-
         //initial opengl state
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
         glEnable(GL_CULL_FACE); GLError.checkThrow()
@@ -171,6 +121,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         glEnable(GL_DEPTH_TEST); GLError.checkThrow()
         glDepthFunc(GL_LESS); GLError.checkThrow()
 
+        /** CHARACTER - CAMERA ASSIGNMENT **/
         mainChar = snail
         p1Camera.parent = mainChar
 
@@ -193,21 +144,7 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         p2Camera.bind(staticShader)
         renderGameScene(p2Camera)
 
-        val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
-        bikePointLight.lightColor = changingColor
-
-        // bind lights
-        for (pointLight in pointLightList) {
-            pointLight.bind(staticShader)
-        }
-        staticShader.setUniform("numPointLights", pointLightList.size)
-        for (spotLight in spotLightList) {
-            spotLight.bind(staticShader, p1Camera.calculateViewMatrix())
-        }
-        staticShader.setUniform("numSpotLights", spotLightList.size)
-
         staticShader.setUniform("shadingColor", skyColor)
-        bike.render(staticShader)
 
         for (obj in objList) {
             obj.render(staticShader)
@@ -219,15 +156,6 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         staticShader.setUniform("view_matrix", camera.calculateViewMatrix(), false)
         staticShader.setUniform("proj_matrix", camera.calculateProjectionMatrix(), false)
 
-        // Binden Sie die Lichter für die übergebene Kamera
-        for (pointLight in pointLightList) {
-            pointLight.bind(staticShader)
-        }
-        staticShader.setUniform("numPointLights", pointLightList.size)
-        for (spotLight in spotLightList) {
-            spotLight.bind(staticShader, camera.calculateViewMatrix())
-        }
-        staticShader.setUniform("numSpotLights", spotLightList.size)
         mainChar.render(staticShader)
         secChar.render(staticShader)
         // Rendern Sie andere Objekte in der Szene, wenn vorhanden
