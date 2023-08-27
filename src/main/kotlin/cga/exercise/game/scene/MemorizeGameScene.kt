@@ -187,7 +187,7 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
         devCamera.bind(staticShader)
         devCamera.updateCameraPosition()
-        //camera.bind(staticShader)
+        camera.bind(staticShader)
 
 
         for (obj in objList) {

@@ -55,16 +55,18 @@ class Game(
 
         activeScene().update(dt, t)
 
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_1) || activeScene().window.getKeyState(GLFW.GLFW_KEY_SPACE)) {
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_1)) {
             changeScene(GameType.LOBBY)
         }
         if (activeScene().window.getKeyState(GLFW.GLFW_KEY_2) || activeScene().window.getKeyState(GLFW.GLFW_KEY_T)) {
             changeScene(GameType.JUMP_ROPE)
         }
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_3) || activeScene().window.getKeyState(GLFW.GLFW_KEY_Z)) {
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_3) || activeScene().window.getKeyState(GLFW.GLFW_KEY_R)) {
             changeScene(GameType.MEMORIZE)
         }
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_4) || activeScene().window.getKeyState(GLFW.GLFW_KEY_R)) {
+
+        // GLFW_KEY_Y entspricht hier der Taste Z auf einem deutschen Keyboard
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_4) || activeScene().window.getKeyState(GLFW.GLFW_KEY_Y)) {
             changeScene(GameType.RACING)
         }
     }

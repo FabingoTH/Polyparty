@@ -41,7 +41,7 @@ class OrbitCamera(private val target: Transformable) : Camera() {
         val newPosition = Vector3f(targetPosition).add(xOffset.toFloat(), verticalDistance.toFloat(), zOffset.toFloat())
         setPosition(newPosition)
 
-        // Verwende die JOML lookAt-Funktion
+
         val viewMatrix = Matrix4f().lookAt(
             newPosition, // Aktualisierte Kameraposition
             targetPosition, // Zielposition

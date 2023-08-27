@@ -48,12 +48,30 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     private val skybox: Renderable
     private val skyColor: Vector3f
 
+    /**
+     * RACE STARTING POSITIONS
+     */
+    private val mainCharPos: Vector3f
+    private val secCharPos: Vector3f
+    var movementEnabled: Boolean = true
+
+    /**
+     * WIN TEXT
+     */
+    private val p1Win: Renderable
+    private val p2Win: Renderable
+
     //scene setup
     init {
 
         /** MODELS **/
         racetrack =
-            loadModel("assets/project_models/Rennstrecke/autodraha.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            loadModel(
+                "assets/project_models/Rennstrecke/autodraha.obj",
+                Math.toRadians(-90.0f),
+                Math.toRadians(90.0f),
+                0.0f
+            )
                 ?: throw IllegalArgumentException("Could not load the hose")
         racetrack.apply {
             rotate(0f, Math.toRadians(-90.0f), Math.toRadians(-90f))
@@ -65,8 +83,8 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
             "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
         ) ?: throw IllegalArgumentException("Could not load the squirrel")
         squirrel.apply {
-            rotate(0.0f,Math.toRadians(180f),0.0f)
-            translate(Vector3f(1.0f,0.0f,0.0f))
+            rotate(0.0f, Math.toRadians(180f), 0.0f)
+            translate(Vector3f(-1.0f, 0.0f, 0.0f))
         }
         objList.add(squirrel)
 
@@ -77,8 +95,8 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         )
             ?: throw IllegalArgumentException("Could not load the snail")
         snail.apply {
-            rotate(0.0f,Math.toRadians(180f),0.0f)
-            translate(Vector3f(-1.0f,0.0f,0.0f))
+            rotate(0.0f, Math.toRadians(180f), 0.0f)
+            translate(Vector3f(1.0f, 0.0f, 0.0f))
             scale(Vector3f(0.8f))
         }
         objList.add(snail)
@@ -102,6 +120,29 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         p2Camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         p2Camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
+
+        /**
+         * WIN TEXTS
+         */
+        p1Win = loadModel(
+            "assets/project_models/Rennstrecke/p1Win.obj",
+            Math.toRadians(90f), Math.toRadians(180f),
+            0.0f
+        ) ?: throw IllegalArgumentException("Could not load the text")
+        p1Win.scale(Vector3f(0.3f))
+        p1Win.preTranslate(Vector3f(0f, -1f, 0f))
+        objList.add(p1Win)
+
+
+        p2Win = loadModel(
+            "assets/project_models/Rennstrecke/p2Win.obj",
+            Math.toRadians(90f), Math.toRadians(180f),
+            0.0f
+        ) ?: throw IllegalArgumentException("Could not load the text")
+        p2Win.scale(Vector3f(0.3f))
+        p2Win.preTranslate(Vector3f(0f, -1f, 0f))
+        objList.add(p2Win)
+
         /** SKYBOX **/
         skyColor = Vector3f(1f)
         skybox = loadModel(
@@ -124,14 +165,23 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
         /** CHARACTER - CAMERA ASSIGNMENT **/
-        mainChar = snail
+        mainChar = squirrel
         p1Camera.parent = mainChar
 
-        secChar = squirrel
+        secChar = snail
         p2Camera.parent = secChar
 
         objList.add(mainChar)
         objList.add(secChar)
+
+
+        /**
+         * GOAL BOUNDING BOX
+         */
+
+        mainCharPos = mainChar.getWorldPosition() // -1, 0, 8.74
+        racetrack.boundingBoxList[0] = AABB(Vector3f(-6f, 0f, -6f), mainCharPos.add(6f, 0f, -5.9f))
+        secCharPos = secChar.getWorldPosition()
 
         //initial opengl state
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
@@ -189,31 +239,76 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         val moveMul = 30.0f
         val rotateMul = 1f * Math.PI.toFloat()
 
-        if (window.getKeyState(GLFW_KEY_W)) {
-            mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_S)) {
-            mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
-        }
-        if (window.getKeyState(GLFW_KEY_A)) {
-            mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
-        }
-        if (window.getKeyState(GLFW_KEY_D)) {
-            mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
+        if (movementEnabled) {
+            if (window.getKeyState(GLFW_KEY_W)) {
+                mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
+            }
+            if (window.getKeyState(GLFW_KEY_S)) {
+                mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
+            }
+            if (window.getKeyState(GLFW_KEY_A)) {
+                mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
+            }
+            if (window.getKeyState(GLFW_KEY_D)) {
+                mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
+            }
+
+            if (window.getKeyState(GLFW_KEY_UP)) {
+                secChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
+            }
+            if (window.getKeyState(GLFW_KEY_DOWN)) {
+                secChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
+            }
+            if (window.getKeyState(GLFW_KEY_LEFT)) {
+                secChar.rotate(0.0f, dt * rotateMul, 0.0f)
+            }
+            if (window.getKeyState(GLFW_KEY_RIGHT)) {
+                secChar.rotate(0.0f, -dt * rotateMul, 0.0f)
+            }
         }
 
-        if (window.getKeyState(GLFW_KEY_UP)) {
-            secChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
+
+        if (window.getKeyState(GLFW_KEY_P)) {
+            println(mainChar.getWorldPosition())
         }
-        if (window.getKeyState(GLFW_KEY_DOWN)) {
-            secChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
+
+
+        // Kollision: Win Detection
+
+        // wird hier gesetzt, damit es immer geupdated wird
+        mainChar.boundingBoxList[0] = AABB(
+            Vector3f(mainChar.getWorldPosition().add(Vector3f(-1f))),
+            Vector3f(mainChar.getWorldPosition().add(Vector3f(1f)))
+        )
+        secChar.boundingBoxList[0] = AABB(
+            Vector3f(secChar.getWorldPosition().add(Vector3f(-1f))),
+            Vector3f(secChar.getWorldPosition().add(Vector3f(1f)))
+        )
+
+        if (mainChar.boundingBoxList[0].collidesWith(racetrack.boundingBoxList[0])) {
+            movementEnabled = false
+            mainChar.setWorldPosition(Vector3f(-1f, 0f, 0f))
+            mainChar.lookAt(Vector3f(-1f, 0f, 1f))
+            secChar.setWorldPosition(Vector3f(1f, 0f, 0f))
+            secChar.lookAt(Vector3f(1f, 0f, 1f))
+
+            p1Win.translate(Vector3f(0f, 15f, 0f))
+
+            println("Player 1 won!")
         }
-        if (window.getKeyState(GLFW_KEY_LEFT)) {
-            secChar.rotate(0.0f, dt * rotateMul, 0.0f)
+
+        if (secChar.boundingBoxList[0].collidesWith(racetrack.boundingBoxList[0])) {
+            movementEnabled = false
+            mainChar.setWorldPosition(Vector3f(-1f, 0f, 0f))
+            mainChar.lookAt(Vector3f(-1f, 0f, 1f))
+            secChar.setWorldPosition(Vector3f(1f))
+            secChar.lookAt(Vector3f(1f, 0f, 1f))
+
+            p2Win.preTranslate(Vector3f(0f, 15f, 0f))
+
+            println("Player 2 won!")
         }
-        if (window.getKeyState(GLFW_KEY_RIGHT)) {
-            secChar.rotate(0.0f, -dt * rotateMul, 0.0f)
-        }
+
     }
 
     override fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
