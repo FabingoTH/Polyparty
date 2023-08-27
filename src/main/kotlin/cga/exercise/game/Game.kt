@@ -54,16 +54,16 @@ class Game(
 
         activeScene().update(dt, t)
 
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_1)) {
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_1) || activeScene().window.getKeyState(GLFW.GLFW_KEY_SPACE)) {
             changeScene(GameType.LOBBY)
         }
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_2)) {
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_2) || activeScene().window.getKeyState(GLFW.GLFW_KEY_T)) {
             changeScene(GameType.JUMP_ROPE)
         }
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_3)) {
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_3) || activeScene().window.getKeyState(GLFW.GLFW_KEY_Z)) {
             changeScene(GameType.MEMORIZE)
         }
-        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_4)) {
+        if (activeScene().window.getKeyState(GLFW.GLFW_KEY_4) || activeScene().window.getKeyState(GLFW.GLFW_KEY_R)) {
             changeScene(GameType.RACING)
         }
     }

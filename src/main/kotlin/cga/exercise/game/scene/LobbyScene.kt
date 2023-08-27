@@ -149,35 +149,33 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         squirrel.translate(Vector3f(0f, 6f, 0f))
 
         shovel =
-            loadModel("assets/project_models/Schaufel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+            loadModel("assets/project_models/Schaufel/model.obj", Math.toRadians(-60.0f), Math.toRadians(40.0f), 0f)
                 ?: throw IllegalArgumentException("Could not load the shovel")
-
+        shovel.scale(Vector3f(0.1f))
+        shovel.preTranslate(Vector3f(-0.2f, 0.6f, 1.8f))
         objList.add(shovel)
 
         snail = loadModel(
             "assets/project_models/Schnecke/Mesh_Snail.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
+            0f, Math.toRadians(180f),
             0.0f
         )
             ?: throw IllegalArgumentException("Could not load the snail")
-        snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
-        snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
-        snail.scale(Vector3f(0.05f))
+        snail.scale(Vector3f(0.8f))
         objList.add(snail)
 
-        rake = loadModel("assets/project_models/Hake/rake.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+        rake = loadModel("assets/project_models/Hake/rake.obj", Math.toRadians(-40.0f), Math.toRadians(60.0f), 0.0f)
             ?: throw IllegalArgumentException("Could not load the rake")
-        rake.scale(Vector3f(0.5f))
-        rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
-        rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
+        rake.preTranslate(Vector3f(-0.2f, 0.4f, 1.7f))
+        rake.scale(Vector3f(0.1f))
         objList.add(rake)
 
         backpack =
             loadModel("assets/project_models/Rucksack/backpack.obj", Math.toRadians(-90f), Math.toRadians(-90f), 0.0f)
                 ?: throw IllegalArgumentException("Could not load the backpack")
         objList.add(backpack)
-        backpack.preTranslate(Vector3f())
+        backpack.preTranslate(Vector3f(-4f, 0.45f, 1.9f))
+        backpack.scale(Vector3f(0.2f))
 
         rake.parent = garden
         shovel.parent = garden
