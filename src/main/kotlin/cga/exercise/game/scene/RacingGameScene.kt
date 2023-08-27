@@ -32,6 +32,10 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
     private val p1Camera: Camera
     private val p2Camera : Camera
 
+    /** LIGHTS **/
+    private val pointLightList = mutableListOf<PointLight>()
+    private val spotLightList = mutableListOf<SpotLight>()
+
     /** OBJECTS **/
     private val objList: MutableList<Renderable> = mutableListOf()
     private val snail: Renderable
@@ -113,13 +117,11 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         }
         objList.add(skybox)
 
-        //initial opengl state
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
-        glEnable(GL_CULL_FACE); GLError.checkThrow()
-        glFrontFace(GL_CCW); GLError.checkThrow()
-        glCullFace(GL_BACK); GLError.checkThrow()
-        glEnable(GL_DEPTH_TEST); GLError.checkThrow()
-        glDepthFunc(GL_LESS); GLError.checkThrow()
+        /** LIGHTS **/
+        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
+        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
+        spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
+        spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
 
         /** CHARACTER - CAMERA ASSIGNMENT **/
         mainChar = snail
@@ -130,6 +132,14 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
 
         objList.add(mainChar)
         objList.add(secChar)
+
+        //initial opengl state
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
+        glEnable(GL_CULL_FACE); GLError.checkThrow()
+        glFrontFace(GL_CCW); GLError.checkThrow()
+        glCullFace(GL_BACK); GLError.checkThrow()
+        glEnable(GL_DEPTH_TEST); GLError.checkThrow()
+        glDepthFunc(GL_LESS); GLError.checkThrow()
     }
 
     override fun render(dt: Float, t: Float) {
@@ -143,6 +153,17 @@ class RacingGameScene(override val window: GameWindow) : AScene() {
         glViewport(window.framebufferWidth / 2, 0, window.framebufferWidth / 2, window.framebufferHeight)
         p2Camera.bind(staticShader)
         renderGameScene(p2Camera)
+
+        // bind lights
+        for (pointLight in pointLightList) {
+            pointLight.bind(staticShader)
+        }
+        staticShader.setUniform("numPointLights", pointLightList.size)
+        for (spotLight in spotLightList) {
+            spotLight.bind(staticShader, p1Camera.calculateViewMatrix())
+            spotLight.bind(staticShader, p2Camera.calculateViewMatrix())
+        }
+        staticShader.setUniform("numSpotLights", spotLightList.size)
 
         staticShader.setUniform("shadingColor", skyColor)
 
