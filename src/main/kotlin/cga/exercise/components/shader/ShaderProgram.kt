@@ -1,6 +1,7 @@
 package cga.exercise.components.shader
 
 import cga.exercise.components.texture.Texture2D
+import cga.exercise.components.texture.TextureDepth
 import org.joml.*
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11
@@ -287,6 +288,18 @@ open class ShaderProgram(vertexShaderPath: String, fragmentShaderPath: String) {
      * @return
      */
     fun setUniform(name: String, tex: Texture2D): Boolean {
+        if (programID == 0) return false
+        val tu = currentTextureUnit++
+        tex.bind(tu)
+        val loc = GL20.glGetUniformLocation(programID, name)
+        if (loc != -1) {
+            GL20.glUniform1i(loc, tu)
+            return true
+        }
+        return false
+    }
+
+    fun setUniform(name: String, tex: TextureDepth): Boolean {
         if (programID == 0) return false
         val tu = currentTextureUnit++
         tex.bind(tu)

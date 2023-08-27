@@ -2,10 +2,11 @@ package cga.exercise.game.scene
 
 import cga.exercise.components.camera.Camera
 import cga.exercise.components.geometry.Renderable
+import cga.exercise.components.geometry.Transformable
 import cga.exercise.components.gui.GuiElement
 import cga.exercise.components.light.PointLight
 import cga.exercise.components.shader.GuiShader
-import cga.exercise.components.texture.Texture2D
+import cga.exercise.components.shadow.ShadowMap
 import cga.exercise.game.GameType
 import cga.exercise.game.Player
 import cga.framework.GLError
@@ -27,6 +28,7 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
 
     // CAMERA
     private val camera: Camera
+    private val shadowMap: ShadowMap
 
     private val objList: MutableList<Renderable> = mutableListOf()
     private val guiList: MutableList<GuiElement> = mutableListOf()
@@ -117,6 +119,9 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
             )
         )
 
+        val lightSpace = Transformable()
+        lightSpace.translate(Vector3f(0f, 25f, 0f))
+        /*
         val squirrelPic = Texture2D("assets/textures/pictures/squirrel.png", true)
         val squirrelElement = GuiElement(squirrelPic, Vector2f(-0.9f, 0.9f), Vector2f(0.1f))
 
@@ -125,6 +130,14 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
 
         guiList.add(squirrelElement)
         guiList.add(snailElement)
+
+         */
+
+        shadowMap = ShadowMap(1024, 1024, lightSpace)
+
+        val shadowElement = GuiElement(shadowMap.getDepthTexture(), Vector2f(0f), Vector2f(1f))
+
+        guiList.add(shadowElement)
 
         /*
         val fontTexture = Texture2D("assets/fonts/sans/sans.png", true)
@@ -148,6 +161,7 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
 
     override fun render(dt: Float, t: Float) {
         super.render(dt, t)
+        shadowMap.render(objList)
 
         staticShader.use()
 
