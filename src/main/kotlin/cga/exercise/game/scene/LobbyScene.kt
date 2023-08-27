@@ -203,7 +203,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
         camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
 
-        skyColor = Vector3f(1.0f, 1.0f, 1.0f)
+        skyColor = Vector3f(0.6f, 0.6f, 0.6f)
 
         skybox = loadModel(
             "assets/project_models/Skybox/anime_sky.obj",
@@ -286,8 +286,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         staticShader.setUniform("shadingColor", skyColor)
         skybox.render(staticShader)
 
-        staticShader.setUniform("shadingColor", Vector3f(0.6f, 0.6f, 0.6f))
-
+        staticShader.setUniform("shadingColor", Vector3f(0.3f, 0.3f, 0.3f))
 
 
         for (obj in objList) {

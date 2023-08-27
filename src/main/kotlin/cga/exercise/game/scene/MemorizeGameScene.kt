@@ -4,6 +4,7 @@ import cga.exercise.components.camera.Aspectratio
 import cga.exercise.components.camera.Camera
 import cga.exercise.components.camera.OrbitCamera
 import cga.exercise.components.geometry.*
+import cga.exercise.components.light.PointLight
 import cga.exercise.components.texture.Texture2D
 import cga.exercise.game.GameType
 import cga.framework.GLError
@@ -42,6 +43,8 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
     private val objList = mutableListOf<Renderable>()
     private var camera: Camera
     private val devCamera: OrbitCamera
+
+    private val pointLightList = mutableListOf<PointLight>()
 
     private var memoStage: MemoStage
     private var pointsP1: Int = 0
@@ -167,6 +170,46 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         devCamera = OrbitCamera(playerPOV)
         memoStage = MemoStage.FLOWER // initial stage (beim rendern/spawnen)
 
+        /**
+         * setup Light (Cel)
+         */
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(92f / 255f, 143f / 255f, 224f / 255f),
+                Vector3f(-8f, 0.9f, -0.045f),
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(92f / 255f, 143f / 255f, 224f / 255f),
+                Vector3f(-18f, 0.9f, -0.045f)
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(92f / 255f, 143f / 255f, 224f / 255f),
+                Vector3f(2f, 0.9f, -0.045f)
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(92f / 255f, 143f / 255f, 224f / 255f),
+                Vector3f(12f, 0.9f, -0.045f)
+            )
+        )
+        pointLightList.add(
+            PointLight(
+                "pointLight[${pointLightList.size}]",
+                Vector3f(92f / 255f, 143f / 255f, 224f / 255f),
+                Vector3f(22f, 0.9f, -0.045f)
+            )
+        )
+
+
         //initial opengl state
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
         GL11.glEnable(GL11.GL_CULL_FACE); GLError.checkThrow()
@@ -182,12 +225,21 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
         super.render(dt, t)
 
         staticShader.use()
-        staticShader.setUniform("shadingColor", groundColor)
-        ground.render(staticShader)
+
+
 
         devCamera.bind(staticShader)
         devCamera.updateCameraPosition()
         camera.bind(staticShader)
+
+        // bind lights
+        for (pointLight in pointLightList) {
+            pointLight.bind(staticShader)
+        }
+        staticShader.setUniform("numPointLights", pointLightList.size)
+
+        staticShader.setUniform("shadingColor", Vector3f(0.5f, 0.5f, 0.5f))
+        ground.render(staticShader)
 
 
         for (obj in objList) {
@@ -208,6 +260,10 @@ class MemorizeGameScene(override val window: GameWindow) : AScene() {
          * Steuerung Player 2: UIJK
          * SPACE ends game
          */
+
+        if (window.getKeyState(GLFW.GLFW_KEY_P)) {
+            println("${playerPOV.getWorldPosition().x.toDouble()} + ${playerPOV.getWorldPosition().y.toDouble()} + ${playerPOV.getWorldPosition().y.toDouble()}")
+        }
 
         if (window.getKeyState(GLFW.GLFW_KEY_SPACE)) {
             window.changeScene(GameType.LOBBY)

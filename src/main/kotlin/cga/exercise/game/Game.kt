@@ -28,7 +28,7 @@ class Game(
 
     init {
         setCursorVisible(false)
-        activeScene = GameType.LOBBY
+        activeScene = GameType.MEMORIZE
 
         mainMenuScene = LobbyScene(this)
         jumpRopeScene = JumpRythmGameScene(this)
