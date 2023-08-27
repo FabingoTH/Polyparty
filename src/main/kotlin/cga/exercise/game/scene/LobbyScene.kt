@@ -98,6 +98,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         garden.preTranslate(Vector3f(0f, -0.5f, -1f))
         objList.add(garden)
 
+
         // bounding box links
         garden.boundingBoxList[0] = AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(-4.6f, 0f, 3f))
 
@@ -157,7 +158,6 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
         hose.scale(Vector3f(0.1f))
         objList.add(hose)
-
         shovel.parent = garden
         hose.parent = garden
         /**
@@ -195,6 +195,13 @@ class LobbyScene(override val window: GameWindow) : AScene() {
         }
 
 
+        //initial opengl state
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
+        glEnable(GL_CULL_FACE); GLError.checkThrow()
+        glFrontFace(GL_CCW); GLError.checkThrow()
+        glCullFace(GL_BACK); GLError.checkThrow()
+        glEnable(GL_DEPTH_TEST); GLError.checkThrow()
+        glDepthFunc(GL_LESS); GLError.checkThrow()
 
         mainChar = squirrel
         camera.parent = mainChar
@@ -288,24 +295,7 @@ class LobbyScene(override val window: GameWindow) : AScene() {
             oldMouseX = xpos
             oldMouseY = ypos
         }
-
-
-        // Ursprünglicher MouseMove Code
-        /* if (!firstMouseMove) {
-            val yawAngle = (xpos - oldMouseX).toFloat() * 0.002f
-            val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
-            if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
-                mainChar.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                bike.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
-            }
-        } else firstMouseMove = false
-        oldMouseX = xpos
-        oldMouseY = ypos */
     }
-
 
 
     override fun onMouseScroll(xoffset: Double, yoffset: Double) {

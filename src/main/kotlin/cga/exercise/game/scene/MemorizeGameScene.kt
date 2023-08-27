@@ -1,538 +1,298 @@
-package cga.exercise.game
+package cga.exercise.game.scene
 
-import cga.exercise.components.camera.Aspectratio.Companion.custom
+import cga.exercise.components.camera.Aspectratio
 import cga.exercise.components.camera.Camera
-import cga.exercise.components.collision.*
-import cga.exercise.components.geometry.Material
-import cga.exercise.components.geometry.Mesh
-import cga.exercise.components.geometry.Renderable
-import cga.exercise.components.geometry.VertexAttribute
-import cga.exercise.components.light.PointLight
-import cga.exercise.components.light.SpotLight
-import cga.exercise.components.shader.ShaderProgram
 import cga.exercise.components.camera.OrbitCamera
-import cga.exercise.components.texture.Texture2D
-import cga.exercise.game.scene.AScene
+import cga.exercise.components.geometry.Renderable
+import cga.exercise.components.geometry.Transformable
+import cga.exercise.game.GameType
 import cga.framework.GLError
 import cga.framework.GameWindow
 import cga.framework.ModelLoader.loadModel
-import cga.framework.OBJLoader.loadOBJ
 import org.joml.Math
-import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.opengl.GL11.*
+import org.lwjgl.glfw.GLFW
+import org.lwjgl.opengl.GL11
 
-/**
- * Created by Fabian on 16.09.2017.
- */
 class MemorizeGameScene(override val window: GameWindow) : AScene() {
 
-    private val ground: Renderable
-    private val bike: Renderable
 
-    private val groundMaterial: Material
-    private val groundColor: Vector3f
+    private val playerPOV: Renderable
 
-    //Lights
-    private val bikePointLight: PointLight
-    private val pointLightList = mutableListOf<PointLight>()
 
-    private val bikeSpotLight: SpotLight
-    private val spotLightList = mutableListOf<SpotLight>()
+    private val flowerSetup: Renderable
+    private val originalFlower: Renderable
 
-    // Jump Animation Variabeln
-    private val jumpHeight = 0.05f
-    private val jumpFrequency = 25.0f // Anzahl der Hüpfbewegungen pro Sekunde
-    private var jumpPhase = 0.0f // Aktuelle Phase der Hüpfanimation
+    private val rakeSetup: Renderable
+    private val originalRake: Renderable
 
-    //
-    private val orbitCamera: OrbitCamera
-    private val camera: Camera
+    private val lilySetup: Renderable
+    private val originalLily: Renderable
+
+
+    private val win1setup: Renderable
+    private val win2setup: Renderable
+
+    private val objList = mutableListOf<Renderable>()
+    private var camera: Camera
+    private val devCamera: OrbitCamera
+
+    private var memoStage: MemoStage
+    private var pointsP1: Int = 0
+    private var pointsP2: Int = 0
+
     private var oldMouseX = 0.0
     private var oldMouseY = 0.0
     private var firstMouseMove = true
 
-    /**
-     * Box to help figure out the coords for collision detection
-     */
-    private val colBox: Renderable
-
-    /**
-     * Liste mit allen hinzugefügten Objekten, für die es Collision Detection geben soll.
-     * Erleichtert Collision Detection in update()-Funktion.
-     */
-
-    private val objList: MutableList<Renderable> = mutableListOf()
-
-
-    /** GAME LOGIK
-     *
-     * Variablen für die Game-Logik.
-     *
-     */
-
-    /**
-     * Bewegung kann hiermit eingeschränkt werden
-     */
-    private var active_game: GameType
-
-    /** PROJECT MODELS
-     *  Modell als .obj-File, Material als .mtl-File und Texturen als .png-Files in "assets".
-     *  -> Texture Maps von Meike in Blender hinzugefügt.
-     *  Alles in Scene ladbar mit vorhandener loadModel()-Methode (vgl. Motorcycle aus Praktikum).
-     */
-
-    /**
-     *  Garten als Overworld-Model:
-     *  -> Modell "Cloister Garden" von Bruno Oliveira via PolyPizza.
-     */
-    private val garden: Renderable
-
-    /**
-     * SPIELFIGUREN: Werden evtl. dynamisch gesetzt. Um die Steuerung des aktuellen main- und second characters
-     * definieren zu können, werden hier entsprechende "
-     */
-    private val mainChar: Renderable
-    private val secChar: Renderable
-
-
-    /**
-     * Eichhörnchen als Spielfigur:
-     * -> Modell "Lowpoly Squirrel" von Tipatat Chennavasin via PolyPizza.
-     */
-    private val squirrel: Renderable
-
-    /** Haufen aus Schaufel, Hake und Schnecke:
-     * Symbolisiert das "Memory"/Sortier-Spiel. Anvisieren und drücken auf "E" soll
-     * teleportieren/Spiel starten.
-     * -> Modell "Garden Trovel" von Pookage Hayes via PolyPizza.
-     * -> Modell "Hand Rake" von Jarlan Perez via PolyPizza.
-     * -> Modell "Snail" von Poly by Google via PolyPizza.
-     */
-    private val shovel: Renderable
-    private val rake: Renderable
-    private val snail: Renderable
-
-    /** Gartenschlauch:
-     * Symbolisiert das Springseil-Spiel. Anvisieren und drücken auf "E" soll
-     * teleportieren/Spiel starten.
-     * -> Modell "TIME HOTEL 4.28" von S. Paul Michael via PolyPizza.
-     */
-    private val hose: Renderable
-
-    /** Skybox (eher Skydome)
-     * -> Credits noch einfügen.
-     */
-    private val skybox: Renderable
-    private val skyColor: Vector3f
-
-    //scene setup
     init {
 
-        //load textures
-        val groundDiff = Texture2D("assets/textures/stone_floor/tiles.png", true)
-        groundDiff.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundSpecular = Texture2D("assets/textures/stone_floor/tiles.png", true)
-        groundSpecular.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        val groundEmit = Texture2D("assets/textures/stone_floor/tiles.png", true)
-        groundEmit.setTexParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)
-        groundMaterial = Material(groundDiff, groundEmit, groundSpecular, 60f, Vector2f(64.0f, 64.0f))
-
-        //load an object and create a mesh
-        val gres = loadOBJ("assets/models/ground.obj")
-        //Create the mesh
-        val stride = 8 * 4
-        val atr1 = VertexAttribute(3, GL_FLOAT, stride, 0)     //position attribute
-        val atr2 = VertexAttribute(2, GL_FLOAT, stride, 3 * 4) //texture coordinate attribute
-        val atr3 = VertexAttribute(3, GL_FLOAT, stride, 5 * 4) //normal attribute
-        val vertexAttributes = arrayOf(atr1, atr2, atr3)
-        //Create renderable
-        ground = Renderable()
-        for (m in gres.objects[0].meshes) {
-            val mesh = Mesh(m.vertexData, m.indexData, vertexAttributes, groundMaterial)
-            ground.meshes.add(mesh)
-        }
-        bike = loadModel(
-            "assets/Light Cycle/Light Cycle/HQ_Movie cycle.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
-            0.0f
-        ) ?: throw IllegalArgumentException("Could not load the bike")
-        bike.scale(Vector3f(0.8f, 0.8f, 0.8f))
-
-        /** Setup Collision Detection and Logic
-         *
-         */
-        colBox = loadModel(
-            "assets/project_models/CollisionHelp/col.obj",
-            0f,
-            0f,
-            0f
-        ) ?: throw IllegalArgumentException("Could not load the cube")
-        //objList.add(colBox)
-        //colBox.boundingBoxList[0] = AABB(min = Vector3f(-1f, 0f, -1f), max = Vector3f(1f, 0f, 1f))
-        colBox.scale(Vector3f(0.5f))
-        colBox.preTranslate(Vector3f(5.2f, 0f, -6f))
+        // for easier development: target for orbit cam
+        playerPOV = loadModel("assets/project_models/Eichhoernchen/squirrel.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the player")
+        objList.add(playerPOV)
+        playerPOV.translate(Vector3f(-8f, 0f, 5f))
 
         /**
-         * Orientierung im World-Koordinatensystem (Ausrichtung vom Spawn aus (vor der offenen Gartenseite mit Blick auf Garten))
-         *
-         * x geht nach rechts, -x geht nach links
-         * y geht nach oben, -y geht nach unten
-         * z geht nach hinten (Richtung Cam/"Rückwärtsbewegung"), -z geht nach vorne (von Cam weg/in die Ferne)
-         *
-         * Falls der gesamte Garten verschoben werden soll, dies erst NACH den parent-Setzungen unten machen!! Sonst ist alles hinüber
-         *
+         * object scenes for guessing
          */
 
-        /** Overworld-Setup:
-         ** Setup Garten
-         */
-        garden =
-            loadModel("assets/project_models/Garten/garden.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-                ?: throw IllegalArgumentException("Could not load the garden")
-        garden.scale(Vector3f(2.0f))
-        garden.rotate(Math.toRadians(180f), 0.0f, Math.toRadians(90.0f))
-        garden.preTranslate(Vector3f(0f, -0.5f, -1f))
-        objList.add(garden)
-        objList.add(garden)
+        flowerSetup = loadModel("assets/project_models/MemorizeGameScene/FLOWERSCENE.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the flower scene")
+        objList.add(flowerSetup)
+        flowerSetup.translate(Vector3f(-15f, 0f, 0f))
 
-        // bounding box links
-        garden.boundingBoxList[0] = AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(-4.6f, 0f, 3f))
+        originalFlower = loadModel("assets/project_models/MemorizeGameScene/Blumen/orig/flower.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the flower")
+        objList.add(originalFlower)
+        originalFlower.preTranslate(Vector3f(-17.08f, 0.78f, 0f))
+        originalFlower.scale(Vector3f(0.18f))
 
-        // bounding box rechts
-        garden.boundingBoxList.add(AABB(min = Vector3f(4.9f, 0f, -6f), max = Vector3f(5.1f, 0f, 3f)))
 
-        // bounding box hinten
-        garden.boundingBoxList.add(AABB(min = Vector3f(-4.8f, 0f, -6f), max = Vector3f(5.1f, 0f, -6f)))
-        /**
-         * Setup Spielfigur Eichhörnchen
-         */
-        squirrel = loadModel(
-            "assets/project_models/Eichhoernchen/squirrel.obj", 0f, Math.toRadians(-22f), 0f
-        ) ?: throw IllegalArgumentException("Could not load the squirrel")
-        squirrel.scale(Vector3f(0.7f))
-        squirrel.translate(Vector3f(0f, 6f, 0f))
+        rakeSetup = loadModel("assets/project_models/MemorizeGameScene/RAKESCENE.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the rake scene")
+        objList.add(rakeSetup)
+        rakeSetup.translate(Vector3f(-5f, 0f, 0f))
 
-        /** kleinere Gegenstände:
-         ** Setup Schaufel
-         */
-        shovel =
-            loadModel("assets/project_models/Schaufel/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-                ?: throw IllegalArgumentException("Could not load the shovel")
-        shovel.rotate(Math.toRadians(-90.0f), 0f, 0f)
-        shovel.preTranslate(Vector3f(-0.11f, 0.3f, 1.87f)) // x unten/oben, y links/rechts, z nach vorn/zurück
-        shovel.scale(Vector3f(0.27f))
-        objList.add(shovel)
-
-        /**
-         ** Setup Schnecke
-         */
-        snail = loadModel(
-            "assets/project_models/Schnecke/Mesh_Snail.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
-            0.0f
-        )
-            ?: throw IllegalArgumentException("Could not load the snail")
-        snail.rotate(0f, Math.toRadians(-30f), Math.toRadians(-90.0f))
-        snail.preTranslate(Vector3f(-1.3f, 0.4f, -5.8f)) // x rechts/links, y oben/unten, z nach vorn/zurück
-        snail.scale(Vector3f(1.0f))
-        objList.add(snail)
-
-        /**
-         ** Setup Hake
-         */
-        rake = loadModel("assets/project_models/Hake/rake.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
+        originalRake = loadModel("assets/project_models/MemorizeGameScene/Hake/orig/rake.obj", 0f, 0f, 0f)
             ?: throw IllegalArgumentException("Could not load the rake")
-        rake.scale(Vector3f(0.5f))
-        rake.preTranslate(Vector3f(0f, 0.69f, -5.8f)) // x rechts/links, y oben/unten, z zurück/nach vorn
-        rake.rotate(0f, Math.toRadians(-160.0f), Math.toRadians(-150f))
-        objList.add(rake)
+        objList.add(originalRake)
+        originalRake.rotate(0f, Math.toRadians(-92.0f), 0f)
+        originalRake.scale(Vector3f(0.05f))
+        originalRake.preTranslate(Vector3f(-7.35f, 0.85f, -0.053f))
+
+
+        lilySetup = loadModel("assets/project_models/MemorizeGameScene/LILYSCENE.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the lily scene")
+        objList.add(lilySetup)
+        lilySetup.translate(Vector3f(5f, 0f, 0f))
+
+        originalLily = loadModel("assets/project_models/MemorizeGameScene/Wasserlilie/orig/lily.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the lily")
+        objList.add(originalLily)
+        originalLily.scale(Vector3f(0.3f))
+        originalLily.preTranslate(Vector3f(2.85f, 0.85f, -0.053f))
+        originalLily.rotate(Math.toRadians(-20f), Math.toRadians(-92f), 0f)
+
 
         /**
-         ** Setup Gartenschlauch
+         * setup win screens
          */
-        hose =
-            loadModel("assets/project_models/Schlauch/model.obj", Math.toRadians(-90.0f), Math.toRadians(90.0f), 0.0f)
-                ?: throw IllegalArgumentException("Could not load the hose")
-        hose.translate(
-            Vector3f(
-                0f,
-                0.2f,
-                -1.4f
-            )
-        ) // object space: y links, -y rechts, x runter, -x hoch, z vorwärts, -z rückwärts
-        hose.rotate(
-            Math.toRadians(-150f),
-            Math.toRadians(10.0f),
-            Math.toRadians(-17.0f)
-        ) // pitch rotiert um vertikale Achse, yaw kippt nach hinten/vorne, roll links/rechts
-        hose.scale(Vector3f(0.1f))
-        objList.add(hose)
 
-        shovel.parent = garden
-        hose.parent = garden
+        win1setup = loadModel("assets/project_models/MemorizeGameScene/WIN1SCENE.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the win screen")
+        objList.add(win1setup)
+        win1setup.preTranslate(Vector3f(15f, 0f, 0f))
+
+
+        win2setup = loadModel("assets/project_models/MemorizeGameScene/WIN2SCENE.obj", 0f, 0f, 0f)
+            ?: throw IllegalArgumentException("Could not load the win screen")
+        objList.add(win2setup)
+        win2setup.preTranslate(Vector3f(25f, 0f, 0f))
+
+
         /**
-         * Wenn der Garten nachträglich transformiert wird,
-         * bewegen sich ab hier die entsprechenden Gegenstände mit.
+         * setup static camera
          */
-        garden.scale(Vector3f(1.4f)) // Gesamtgarten größer gemacht
-        // nur kurz höher gemacht, damit man den original Boden nicht dadurch sieht.
-        // Sobald wir den alten Boden entfernen, kann diese Translation entfernt werden.
-        garden.preTranslate(Vector3f(0f, 0.2f, 0f))
 
-        //setup camera
         camera = Camera(
-            custom(window.framebufferWidth, window.framebufferHeight),
+            Aspectratio.custom(window.framebufferWidth, window.framebufferHeight),
             Math.toRadians(90.0f),
             0.1f,
-            1000.0f
+            100.0f
         )
 
-        camera.rotate(Math.toRadians(-25.0f), 0.0f, 0.0f)
-        camera.translate(Vector3f(0.0f, 1.0f, 5.0f))
-
-        groundColor = Vector3f(0.8f)
-        skyColor = Vector3f(0f, 0f,1f)
-
+        // game cam settings
+        camera.lookAt(Vector3f(1f, 0f, 0f)) // anders
+        camera.fov = 0.12f
+        //camera.translate(Vector3f(-0.05f, 0.7f, 8f))
+        //camera.preTranslate(Vector3f(-24f, 0.7f, -0.05f))
+        camera.setPosition(Vector3f(-24f, 0.7f, -0.05f))
+        //camera.lookAt(Vector3f(0f, 0.7f, 1f)) // +x vorwärts, +y geht hoch, +z nach rechts
         /**
-         * Setup Skybox
+         * setup developer Camera (for easier object placement)
          */
 
-        skybox = loadModel(
-            "assets/project_models/Skybox/anime_sky.obj",
-            Math.toRadians(-90.0f),
-            Math.toRadians(90.0f),
-            0.0f
-        ) ?: throw IllegalArgumentException("Could not load the sky")
-        skybox.apply {
-            scale(Vector3f(5.0f))
-            translate(Vector3f(0.0f,5.0f,0.0f))
-            rotate(0.0f, 0.0f, Math.toRadians(-90.0f))
-        }
-
-        //bike point light
-        bikePointLight =
-            PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 0.0f), Vector3f(0.0f, 0.5f, 0.0f))
-        bikePointLight.parent = bike
-        pointLightList.add(bikePointLight)
-
-        //bike spot light
-        bikeSpotLight = SpotLight(
-            "spotLight[${spotLightList.size}]",
-            Vector3f(1f),
-            Vector3f(0f, 1f, -2f),
-            Math.toRadians(20.0f),
-            Math.toRadians(30.0f)
-        )
-        bikeSpotLight.rotate(Math.toRadians(-10.0f), 0.0f, 0.0f)
-        bikeSpotLight.parent = bike
-        spotLightList.add(bikeSpotLight)
-
-        // additional lights in the scene
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(0.0f, 2.0f, 2.0f), Vector3f(-10.0f, 2.0f, -10.0f)))
-        pointLightList.add(PointLight("pointLight[${pointLightList.size}]", Vector3f(2.0f, 0.0f, 0.0f), Vector3f(10.0f, 2.0f, 10.0f)))
-        // spotLightList.add(SpotLight("spotLight[${spotLightList.size}]", Vector3f(10.0f, 300.0f, 300.0f), Vector3f(6.0f, 2.0f, 4.0f), Math.toRadians(20.0f), Math.toRadians(30.0f)))
-        spotLightList.last().rotate(Math.toRadians(20f), Math.toRadians(60f), 0f)
+        devCamera = OrbitCamera(playerPOV)
+        memoStage = MemoStage.FLOWER // initial stage (beim rendern/spawnen)
 
         //initial opengl state
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
-        glEnable(GL_CULL_FACE); GLError.checkThrow()
-        glFrontFace(GL_CCW); GLError.checkThrow()
-        glCullFace(GL_BACK); GLError.checkThrow()
-        glEnable(GL_DEPTH_TEST); GLError.checkThrow()
-        glDepthFunc(GL_LESS); GLError.checkThrow()
-
-        /**
-         * initial game state
-         */
-        active_game = GameType.LOBBY
-        mainChar = squirrel
-        camera.parent = mainChar
-        orbitCamera = OrbitCamera(mainChar)
-        secChar = snail
-        secChar.translate(Vector3f(1f, 0f, 1f))
-        secChar.parent = squirrel
-
-        objList.add(mainChar)
-        objList.add(secChar)
-
+        GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
+        GL11.glEnable(GL11.GL_CULL_FACE); GLError.checkThrow()
+        GL11.glFrontFace(GL11.GL_CCW); GLError.checkThrow()
+        GL11.glCullFace(GL11.GL_BACK); GLError.checkThrow()
+        GL11.glEnable(GL11.GL_DEPTH_TEST); GLError.checkThrow()
+        GL11.glDepthFunc(GL11.GL_LESS); GLError.checkThrow()
 
     }
 
     override fun render(dt: Float, t: Float) {
+
         super.render(dt, t)
 
-        orbitCamera.bind(staticShader)
-        orbitCamera.updateCameraPosition()
+        devCamera.bind(staticShader)
+        devCamera.updateCameraPosition()
+        camera.bind(staticShader)
 
-        val changingColor = Vector3f(Math.abs(Math.sin(t)), 0f, Math.abs(Math.cos(t)))
-        bikePointLight.lightColor = changingColor
-
-        // bind lights
-        for (pointLight in pointLightList) {
-            pointLight.bind(staticShader)
-        }
-        staticShader.setUniform("numPointLights", pointLightList.size)
-        for (spotLight in spotLightList) {
-            spotLight.bind(staticShader, camera.calculateViewMatrix())
-        }
-        staticShader.setUniform("numSpotLights", spotLightList.size)
-
-        // render objects
-        staticShader.setUniform("shadingColor", groundColor)
-        ground.render(staticShader)
-        staticShader.setUniform("shadingColor", changingColor)
-        bike.render(staticShader)
-        staticShader.setUniform("shadingColor", skyColor)
-        skybox.render(staticShader)
-
-        //staticShader.setUniform("shadingColor", Vector3f(0.5f, 0.5f, 0.5f))
 
         for (obj in objList) {
             obj.render(staticShader)
         }
+
+
     }
 
     override fun update(dt: Float, t: Float) {
-        val moveMul = 15.0f
-        val rotateMul = 2f * Math.PI.toFloat()
+
+        val moveMul = 3.0f
+        val rotateMul = 1f * Math.PI.toFloat()
 
         /**
-         * Wenn kein Minispiel aktiv ist:
-         * Steuerung Charakter 1: WASD - Jump: Space (TODO)
-         * Steuerung Charakter 2: IJKL(?) - Jump: Right Shift (TODO)
-         *
-         * TODO: coolere Laufanimation.
+         * (Steuerung analog zu quadratischem Layout des Games)
+         * Steuerung Player 1: QWAS
+         * Steuerung Player 2: UIJK
+         * SPACE ends game
          */
 
-        // GAMESTATE NONE - Steuerung
+        if (window.getKeyState(GLFW.GLFW_KEY_SPACE)) {
+            window.changeScene(GameType.LOBBY)
+        }
 
-        if (active_game == GameType.LOBBY) {
+        // STAGE 1
+        // initial position: flower
+        // pluspunkt bei richtiger antwort + teleportation zum nächsten spiel
+        // println()s zum Debuggen
+        // die else ifs verhindern ein punkte increasen/kamera verschieben wenn taste länger als
+        // 1 framelänge gedrückt wird (was sehr wahrscheinlich ist)
+        //
+        if (memoStage == MemoStage.FLOWER) {
 
-            if (window.getKeyState(GLFW_KEY_W)) {
-                mainChar.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
-
-                // Hüpfanimation
-                jumpPhase += dt * jumpFrequency
-                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
-                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
+            if (window.getKeyState(GLFW.GLFW_KEY_Q)) {
+                pointsP1 = 1
+                println("$pointsP1 und $pointsP2")
+                camera.setPosition(Vector3f(10f, 0f, 0f))
+                memoStage = MemoStage.RAKE
             }
-            if (window.getKeyState(GLFW_KEY_S)) {
-                mainChar.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
+            if (window.getKeyState(GLFW.GLFW_KEY_I)) {
+                pointsP2 = 1
+                camera.setPosition(Vector3f(10f, 0f, 0f))
+                memoStage = MemoStage.RAKE
+            }
+        }
 
-                // Hüpfanimation
-                jumpPhase += dt * jumpFrequency
-                val verticalOffset = jumpHeight * Math.sin(jumpPhase)
-                mainChar.translate(Vector3f(0.0f, verticalOffset, 0.0f))
-            }
+        //STAGE 2
+        if (memoStage == MemoStage.RAKE) {
 
-            // Setzt den Character wieder direkt auf den Boden
-            if (!window.getKeyState(GLFW_KEY_W) && !window.getKeyState(GLFW_KEY_S)) {
-                val currentPosition = mainChar.getWorldPosition()
-                mainChar.translate(Vector3f(0.0f, -currentPosition.y, 0.0f))
-                jumpPhase = 0.0f
+            if (window.getKeyState(GLFW.GLFW_KEY_A)) {
+                pointsP1 = if (pointsP1 == 0) 1 else 2
+                println("$pointsP1 und $pointsP2")
+                camera.setPosition(Vector3f(10f, 0f, 0f))
+                memoStage = MemoStage.LILY
             }
-            if (window.getKeyState(GLFW_KEY_A)) {
-                mainChar.rotate(0.0f, dt * rotateMul, 0.0f)
+            if (window.getKeyState(GLFW.GLFW_KEY_U)) {
+                pointsP2 = if (pointsP2 == 0) 1 else 2
+                camera.setPosition(Vector3f(10f, 0f, 0f))
+                memoStage = MemoStage.LILY
             }
-            if (window.getKeyState(GLFW_KEY_D)) {
-                mainChar.rotate(0.0f, -dt * rotateMul, 0.0f)
+        }
+
+        // STAGE 3
+        if (memoStage == MemoStage.LILY) {
+
+            if (window.getKeyState(GLFW.GLFW_KEY_S)) {
+                pointsP1 = if (pointsP1 == 0) 1 else if (pointsP1 == 1) 2 else 3
+                println("$pointsP1 und $pointsP2")
+                if (pointsP1 > pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+
+                } else if (pointsP1 < pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+
+                }
+                memoStage = MemoStage.DONE
+            }
+            if (window.getKeyState(GLFW.GLFW_KEY_J)) {
+                pointsP2 = if (pointsP2 == 0) 1 else if (pointsP2 == 1) 2 else 3
+                if (pointsP1 > pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+
+                } else if (pointsP1 < pointsP2) {
+                    camera.setPosition(Vector3f(10f, 0f, 0f))
+                }
+                memoStage = MemoStage.DONE
             }
 
         }
 
-        /**
-         * TODO() Seit Merge mit "hopsender" Fortbewegung etwas buggy. gonna fix this when other minigame is done
-         * Kollisionsdetektion
-         * Findet in update() statt, da sich die Position des beweglichen Objekts stetig ändern kann.
-         */
+        // Memo stage done:
+        // do nothing. stand still. let players end game with SPACE as instructed
 
-        // collision check für bike - unser momentan sich bewegendes Hauptobjekt.
-        // später auch hier zu ersetzen mit Spielfiguren
-        // assumes bike has only one bounding box on index [0] (default bb must be overwritten when setting bb)
-        // WIP: testet nur physische collision mit gartenwänden
-        // collision mit hake etc soll dazu führen, die option zu bekommen, das spiel zu starten (sich zu teleportieren)
 
-        // wird hier gesetzt, damit die Bounding Box mit Bewegung des Objektes geupdated wird
-        mainChar.boundingBoxList[0] =
-            AABB(mainChar.getWorldPosition().add(Vector3f(-1f)), mainChar.getWorldPosition().add(Vector3f(1f)))
+        // dev cam steuerung
 
-        // test for colBox
-        /*
-        if(bike.boundingBoxList[0].collidesWith(colBox.boundingBoxList[0])) {
-            bike.preTranslate(bike.boundingBoxList[0].calculateOverlap(colBox.boundingBoxList[0]).mul(0.1f))
+        if (window.getKeyState(GLFW.GLFW_KEY_W)) {
+            playerPOV.translate(Vector3f(0.0f, 0.0f, -dt * moveMul))
         }
-
-         */
-
-        // if object collides with left hand wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[0])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[0])!!.difference)
+        if (window.getKeyState(GLFW.GLFW_KEY_A)) {
+            playerPOV.rotate(0.0f, dt * rotateMul, 0.0f)
         }
-
-        // if object collides with right hand wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[1])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[1])!!.difference)
+        if (window.getKeyState(GLFW.GLFW_KEY_S)) {
+            playerPOV.translate(Vector3f(0.0f, 0.0f, dt * moveMul))
         }
-
-        // if object collides with middle wall
-        if (mainChar.boundingBoxList[0].collidesWith(garden.boundingBoxList[2])) {
-            mainChar.preTranslate(mainChar.boundingBoxList[0].getAxisToCorrect(garden.boundingBoxList[2])!!.difference)
+        if (window.getKeyState(GLFW.GLFW_KEY_D)) {
+            playerPOV.rotate(0.0f, -dt * rotateMul, 0.0f)
         }
-
 
     }
 
     override fun onKey(key: Int, scancode: Int, action: Int, mode: Int) {}
-
     override fun onMouseMove(xpos: Double, ypos: Double) {
 
-        if (active_game == GameType.LOBBY) {
-            var azimuthRate: Float = 0.1f
-            var elevationRate: Float = 0.025f
+        // dev cam
+        val azimuthRate: Float = 0.1f
+        val elevationRate: Float = 0.025f
 
-            if (firstMouseMove) {
-                val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
-                val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
+        if (firstMouseMove) {
+            val yawAngle = (xpos - oldMouseX).toFloat() * azimuthRate
+            val pitchAngle = (ypos - oldMouseY).toFloat() * elevationRate
 
-                // Ändere die elevation und azimuth Winkel der OrbitCamera
-                orbitCamera.azimuth -= yawAngle
+            // Ändere die elevation und azimuth Winkel der OrbitCamera
+            devCamera.azimuth -= yawAngle
 
-                // Begrenze die elevation, um nicht unter -45 Grad zu gehen
-                val newElevation = orbitCamera.elevation - pitchAngle
-                orbitCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
+            // Begrenze die elevation, um nicht unter -45 Grad zu gehen
+            val newElevation = devCamera.elevation - pitchAngle
+            devCamera.elevation = newElevation.coerceIn(10.0f, 70.0f)
 
-                // Speichere die Mausposition für den nächsten Aufruf
-                oldMouseX = xpos
-                oldMouseY = ypos
-            }
+            // Speichere die Mausposition für den nächsten Aufruf
+            oldMouseX = xpos
+            oldMouseY = ypos
         }
 
-        // Ursprünglicher MouseMove Code
-        /* if (!firstMouseMove) {
-            val yawAngle = (xpos - oldMouseX).toFloat() * 0.002f
-            val pitchAngle = (ypos - oldMouseY).toFloat() * 0.0005f
-            if (!window.getKeyState(GLFW_KEY_LEFT_ALT)) {
-                mainChar.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                bike.rotate(0.0f, -yawAngle, 0.0f)
-            } else {
-                camera.rotateAroundPoint(0.0f, -yawAngle, 0.0f, Vector3f(0.0f, 0.0f, 0.0f))
-            }
-        } else firstMouseMove = false
-        oldMouseX = xpos
-        oldMouseY = ypos */
     }
 
-    fun cleanup() {}
-
     override fun onMouseScroll(xoffset: Double, yoffset: Double) {
-        camera.fov += Math.toRadians(yoffset.toFloat())
-        val zoom = orbitCamera.distance + Math.toRadians(yoffset.toFloat()) * -10.0f
-        orbitCamera.distance = zoom.coerceAtMost(7.0f) // Max Zoom Out
+        val zoom = devCamera.distance + Math.toRadians(yoffset.toFloat()) * -10.0f
+        devCamera.distance = zoom.coerceAtMost(7.0f) // Max Zoom Out
     }
 
     override fun changeScene(newScene: GameType) {}

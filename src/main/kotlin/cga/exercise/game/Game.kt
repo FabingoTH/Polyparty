@@ -1,7 +1,6 @@
 package cga.exercise.game
 
 import cga.exercise.game.scene.AScene
-import cga.exercise.game.scene.JumpRythmGameScene
 import cga.framework.GameWindow
 import org.lwjgl.glfw.GLFW
 
@@ -13,29 +12,28 @@ class Game(
     height: Int,
     fullscreen: Boolean = false,
     vsync: Boolean = false,
-    title: String = "Testgame",
+    title: String = "PolyParty",
     GLVersionMajor: Int = 3,
     GLVersionMinor: Int = 3
 ) : GameWindow(width, height, fullscreen, vsync, GLVersionMajor, GLVersionMinor, title, 4, 120.0f) {
 
 
-    private lateinit var activeScene: GameType
-    private lateinit var mainMenuScene: LobbyScene
-    private lateinit var jumpRopeScene: JumpRythmGameScene
-    private lateinit var memoryScene: MemorizeGameScene
-    private lateinit var racingScene: RacingGameScene
-    private lateinit var actualScene: AScene
+    private var activeScene: GameType
+    private var mainMenuScene: LobbyScene
+    private var jumpRopeScene: JumpRythmGameScene
+    private var memoryScene: MemorizeGameScene
+    private var racingScene: RacingGameScene
 
     init {
         setCursorVisible(false)
-        activeScene = GameType.LOBBY
+        activeScene = GameType.MEMORIZE
 
         mainMenuScene = LobbyScene(this)
         jumpRopeScene = JumpRythmGameScene(this)
         memoryScene = MemorizeGameScene(this)
         racingScene = RacingGameScene(this)
 
-        actualScene = mainMenuScene
+        //actualScene = memoryScene
     }
 
     private fun activeScene(): AScene {
@@ -47,8 +45,8 @@ class Game(
         }
     }
 
-    override fun changeScene(newScene: GameType) {
-        activeScene = newScene
+    override fun changeScene(newGame: GameType) {
+        activeScene = newGame
     }
 
     override fun shutdown() {}
