@@ -42,6 +42,7 @@ struct SpotLight
     vec2 Cone;
     vec3 Direction;
 };
+
 // Fixed-size uniform arrays, but with a runtime-configurable number of lights
 uniform PointLight pointLight[MAX_POINT_LIGHTS];
 uniform int numPointLights;

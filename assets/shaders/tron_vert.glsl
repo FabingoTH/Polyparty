@@ -58,6 +58,7 @@ void main(){
     for (int i = 0; i < numSpotLights; i++) {
         vertexData.toSpotLight[i] = (view_matrix * vec4(spotLight[i].Position, 1.0)).xyz - viewpos.xyz;
     }
+
     gl_Position = proj_matrix * viewpos;
     // Calculate surface normal and texture coordinate
     vertexData.normal = (inverse(transpose(modelview)) * vec4(normal, 0.0f)).xyz;
