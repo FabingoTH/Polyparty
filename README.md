@@ -31,5 +31,7 @@ Listen Sie hier alle Teammitglieder auf.
 - Snail: https://poly.pizza/m/aZ_cT-AIu2y
 - Racetrack: https://sketchfab.com/3d-models/lowpoly-racetrack-a2bd81e85612454c8f978f38f1aae0f2
 - SportWagen: https://sketchfab.com/3d-models/generic-passenger-car-pack-20f9af9b8a404d5cb022ac6fe87f21f5
+- Ruler: https://poly.pizza/m/3CqPcG3ATQs
+- Swamp Island: https://poly.pizza/m/cSCAtmKKFuy
 
 
