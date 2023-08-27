@@ -1,9 +1,6 @@
 package cga.exercise.game.scene
 
 import cga.exercise.components.camera.Camera
-import cga.exercise.components.font.mesh.FontType
-import cga.exercise.components.font.mesh.GUIText
-import cga.exercise.components.font.rendering.TextMaster
 import cga.exercise.components.geometry.Renderable
 import cga.exercise.components.gui.GuiElement
 import cga.exercise.components.light.PointLight
@@ -20,7 +17,6 @@ import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW.GLFW_KEY_T
 import org.lwjgl.opengl.GL11.*
-import java.io.File
 
 data class JumpRopePlayer(val player: Player, var score: Int = 0, var isAlive: Boolean = true)
 
@@ -130,10 +126,12 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
         guiList.add(squirrelElement)
         guiList.add(snailElement)
 
+        /*
         val fontTexture = Texture2D("assets/fonts/sans/sans.png", true)
         val font = FontType(fontTexture, File("assets/fonts/sans/sans.fnt"))
 
         GUIText("This is a test text", 5.0, font, Vector2f(0f), 1.0, true)
+         */
 
         //initial opengl state
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GLError.checkThrow()
@@ -170,7 +168,7 @@ class JumpRythmGameScene(override val window: GameWindow) : AScene() {
         }
 
         guiShader.render(guiList)
-        TextMaster.render()
+        //TextMaster.render()
     }
 
     override fun update(dt: Float, t: Float) {

@@ -18,7 +18,7 @@ class TextMeshCreator(metaFile: File) {
         val chars = text.textString.toCharArray()
         val lines: MutableList<Line> = ArrayList()
         var currentLine = Line(metaData.spaceWidth, text.fontSize, text.maxLineLength)
-        var currentWord = Word(text.fontSize.toDouble())
+        var currentWord = Word(text.fontSize)
         for (c in chars) {
             val ascii = c.code
             if (ascii == SPACE_ASCII) {
