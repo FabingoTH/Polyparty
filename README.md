@@ -12,10 +12,11 @@ Listen Sie hier alle Teammitglieder auf.
 
 # Featureliste
 
+- Aufbau einer Szene aus mehreren Objekten (Meike (sowie Fabian/Felix für eigene Minispiele))
 - Skybox (Fabian)
 - Orbit Camera mit Zoom (Fabian)
-- Split Screen (Fabian)
-- Collision Detection (Rand des Levels) (Meike)
+- Racing Game mit Split Screen (Fabian)
+- Collision Detection (Rand des Gartens, Ziel bei Racing Game) (Meike)
 - Memorize MiniGame (Komplette technische Umsetzung) (Meike)
 - Cel Shader (Felix)
 - Lineal-Spring Minigame (Kompette technische Umsetzung) (Felix)
